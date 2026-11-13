@@ -18,7 +18,6 @@ const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const TELEGRAM_API_ID = parseInt(process.env.TELEGRAM_API_ID, 10);
 const TELEGRAM_API_HASH = process.env.TELEGRAM_API_HASH;
 
-// รายชื่อบัญชีแอดมิน (สามารถเพิ่มผ่าน Env ADMIN_EMAILS ใน Render โดยคั่นด้วยลูกน้ำ ,)
 const DEFAULT_ADMINS = ['mintsunisa@teleauto.app', 'huimin168@teleauto.app'];
 const ENV_ADMINS = (process.env.ADMIN_EMAILS || '')
     .split(',')
@@ -28,7 +27,6 @@ const ADMIN_EMAILS = [...new Set([...DEFAULT_ADMINS, ...ENV_ADMINS])];
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-// Middleware 1: ยืนยันตัวตนผู้ใช้จาก JWT Token
 async function authenticateUser(req, res, next) {
     try {
         const authHeader = req.headers.authorization;
@@ -58,7 +56,6 @@ async function authenticateUser(req, res, next) {
     }
 }
 
-// Middleware 2: ตรวจสอบสิทธิ์แอดมินเท่านั้น
 function requireAdmin(req, res, next) {
     if (!req.isAdmin) {
         return res.status(403).json({ success: false, error: 'ปฏิเสธการเข้าถึง: เฉพาะผู้ดูแลระบบเท่านั้น' });
@@ -66,7 +63,6 @@ function requireAdmin(req, res, next) {
     next();
 }
 
-// Middleware 3: ตรวจสอบสิทธิ์ VIP จากตาราง licenses
 async function requireActiveLicense(req, res, next) {
     const userId = req.user.id;
     try {
@@ -107,7 +103,6 @@ const randomDelay = (min = 35, max = 85) => {
     return Math.floor(Math.random() * (max - min + 1) + min) * 1000;
 };
 
-// 1. ตรวจสอบสถานะสิทธิ์ VIP และสิทธิ์แอดมิน
 app.get('/api/license/status', authenticateUser, async (req, res) => {
     const userId = req.user.id;
     try {
@@ -149,7 +144,6 @@ app.get('/api/license/status', authenticateUser, async (req, res) => {
 
 // ================= ADMIN PANEL API =================
 
-// A1. ดึงรายชื่อสมาชิกทั้งหมดพร้อมสถานะ License และบัญชี Telegram
 app.get('/api/admin/users', authenticateUser, requireAdmin, async (req, res) => {
     try {
         const { data: usersData, error: usersErr } = await supabase.auth.admin.listUsers({ perPage: 1000 });
@@ -185,7 +179,6 @@ app.get('/api/admin/users', authenticateUser, requireAdmin, async (req, res) => 
     }
 });
 
-// A2. อนุมัติ / ต่ออายุวันใช้งานให้ลูกค้า
 app.post('/api/admin/grant-license', authenticateUser, requireAdmin, async (req, res) => {
     const { targetUserId, days, planType } = req.body;
     const numDays = parseInt(days, 10);
@@ -232,7 +225,6 @@ app.post('/api/admin/grant-license', authenticateUser, requireAdmin, async (req,
     }
 });
 
-// A3. ระงับ / ยกเลิกสิทธิ์การใช้งาน
 app.post('/api/admin/revoke-license', authenticateUser, requireAdmin, async (req, res) => {
     const { targetUserId } = req.body;
     if (!targetUserId) {
@@ -481,9 +473,18 @@ app.post('/api/telegram/sync-groups', authenticateUser, requireActiveLicense, as
 app.post('/api/groups/toggle', authenticateUser, async (req, res) => {
     const { id, group_id, is_selected } = req.body;
     try {
+        // หากติ๊กเลือกใหม่ ให้ล้างสถานะค้างส่งของกลุ่มนั้นเพื่อให้พร้อมยิงทันที
+        const updatePayload = {
+            is_selected: Boolean(is_selected),
+            updated_at: new Date()
+        };
+        if (Boolean(is_selected)) {
+            updatePayload.last_sent_at = null;
+        }
+
         let query = supabase
             .from('groups')
-            .update({ is_selected: Boolean(is_selected), updated_at: new Date() })
+            .update(updatePayload)
             .eq('user_id', req.user.id);
 
         if (id) {
@@ -496,6 +497,13 @@ app.post('/api/groups/toggle', authenticateUser, async (req, res) => {
 
         const { error } = await query;
         if (error) throw error;
+
+        // ล้างคิวเก่าในหน่วยความจำเพื่อให้คำนวณรายการที่เลือกใหม่ตรงกัน
+        const q = userQueues.get(req.user.id);
+        if (q && !q.isRunning) {
+            userQueues.delete(req.user.id);
+        }
+
         return res.json({ success: true, is_selected: Boolean(is_selected) });
     } catch (err) {
         return res.status(500).json({ success: false, error: err.message });
@@ -505,15 +513,49 @@ app.post('/api/groups/toggle', authenticateUser, async (req, res) => {
 app.post('/api/groups/toggle-all', authenticateUser, async (req, res) => {
     const { is_selected } = req.body;
     try {
+        const updatePayload = {
+            is_selected: Boolean(is_selected),
+            updated_at: new Date()
+        };
+        if (Boolean(is_selected)) {
+            updatePayload.last_sent_at = null;
+        }
+
         const { error } = await supabase
             .from('groups')
-            .update({ is_selected: Boolean(is_selected), updated_at: new Date() })
+            .update(updatePayload)
             .eq('user_id', req.user.id);
 
         if (error) throw error;
+
+        const q = userQueues.get(req.user.id);
+        if (q && !q.isRunning) {
+            userQueues.delete(req.user.id);
+        }
+
         return res.json({ success: true });
     } catch (err) {
         return res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// รีเซ็ตสถานะคิวทั้งหมดเพื่อให้เริ่มส่งตั้งแต่กลุ่มแรกใหม่
+app.post('/api/queue/reset', authenticateUser, async (req, res) => {
+    const userId = req.user.id;
+    try {
+        const q = userQueues.get(userId);
+        if (q && q.isRunning) {
+            return res.status(400).json({ success: false, message: 'กรุณากด STOP ก่อนรีเซ็ตคิว' });
+        }
+        userQueues.delete(userId);
+        await supabase
+            .from('groups')
+            .update({ last_sent_at: null })
+            .eq('user_id', userId);
+
+        return res.json({ success: true, message: 'รีเซ็ตคิวเรียบร้อย พร้อมเริ่มส่งตั้งแต่กลุ่มแรกใหม่' });
+    } catch (err) {
+        return res.status(500).json({ success: false, message: err.message });
     }
 });
 
@@ -560,7 +602,7 @@ app.get('/api/status', authenticateUser, (req, res) => {
     if (!queue) {
         return res.json({
             success: true,
-            stats: { sent: 0, failed: 0, remaining: 0, total: 0, currentGroup: '-', nextDelay: 0 }
+            stats: { sent: 0, failed: 0, remaining: 0, total: 0, currentGroup: '-', nextDelay: 0, isPaused: false }
         });
     }
 
@@ -572,7 +614,8 @@ app.get('/api/status', authenticateUser, (req, res) => {
             remaining: queue.targets.length,
             total: queue.total,
             currentGroup: queue.currentGroup || '-',
-            nextDelay: queue.nextDelay || 0
+            nextDelay: queue.nextDelay || 0,
+            isPaused: !queue.isRunning && queue.targets.length > 0
         }
     });
 });
@@ -594,27 +637,17 @@ app.get('/api/logs', authenticateUser, async (req, res) => {
     }
 });
 
-// 9. สั่ง RUN คิวการยิงโพสต์ (ส่งแบบโพสต์ใหม่ ไม่ติดป้าย Forwarded from และแก้ปัญหา MEDIA_EMPTY)
+// 9. สั่ง RUN คิวการยิงโพสต์ (รองรับการส่งต่อจากงานเดิมที่ค้างไว้เมื่อกด STOP หรือเกิดข้อผิดพลาด)
 app.post('/api/run', authenticateUser, requireActiveLicense, async (req, res) => {
     const userId = req.user.id;
+    const { forceRestart } = req.body || {};
 
-    if (userQueues.has(userId) && userQueues.get(userId).isRunning) {
+    const existingQueue = userQueues.get(userId);
+    if (existingQueue && existingQueue.isRunning) {
         return res.json({ success: true, message: 'ระบบกำลังทำงานอยู่ในขณะนี้' });
     }
 
     try {
-        const { data: groups, error: groupErr } = await supabase
-            .from('groups')
-            .select('*')
-            .eq('user_id', userId)
-            .eq('is_selected', true);
-
-        if (groupErr) throw groupErr;
-
-        if (!groups || groups.length === 0) {
-            return res.status(400).json({ success: false, message: 'กรุณาติ๊กเลือกกลุ่มที่ต้องการส่งอย่างน้อย 1 กลุ่มก่อนกด RUN' });
-        }
-
         const { data: account } = await supabase
             .from('accounts')
             .select('*')
@@ -624,16 +657,59 @@ app.post('/api/run', authenticateUser, requireActiveLicense, async (req, res) =>
 
         if (!account) return res.status(400).json({ success: false, message: 'ไม่พบบัญชี Telegram' });
 
-        const queueState = {
-            isRunning: true,
-            targets: [...groups],
-            total: groups.length,
-            sent: 0,
-            failed: 0,
-            currentGroup: '-',
-            nextDelay: 0
-        };
-        userQueues.set(userId, queueState);
+        let queueState = null;
+        let isResuming = false;
+
+        // ตรวจสอบว่ามีคิวเดิมที่กดหยุดไว้และยังส่งไม่ครบหรือไม่
+        if (!forceRestart && existingQueue && existingQueue.targets && existingQueue.targets.length > 0) {
+            queueState = existingQueue;
+            queueState.isRunning = true;
+            isResuming = true;
+        } else {
+            // ดึงกลุ่มที่ติ๊กเลือกทั้งหมด เรียงตามชื่อ
+            const { data: allSelectedGroups, error: groupErr } = await supabase
+                .from('groups')
+                .select('*')
+                .eq('user_id', userId)
+                .eq('is_selected', true)
+                .order('group_name', { ascending: true });
+
+            if (groupErr) throw groupErr;
+
+            if (!allSelectedGroups || allSelectedGroups.length === 0) {
+                return res.status(400).json({ success: false, message: 'กรุณาติ๊กเลือกกลุ่มที่ต้องการส่งอย่างน้อย 1 กลุ่มก่อนกด RUN' });
+            }
+
+            // กรองเฉพาะกลุ่มที่ยังไม่ถูกส่งในรอบนี้ (last_sent_at IS NULL) เพื่อส่งต่อจากงานที่ค้างไว้แม้อาจจะรีสตาร์ทเซิร์ฟเวอร์ไปแล้ว
+            let pendingGroups = forceRestart
+                ? allSelectedGroups
+                : allSelectedGroups.filter(g => !g.last_sent_at);
+
+            // หากส่งครบทุกกลุ่มไปแล้วในรอบก่อน ให้เริ่มรอบใหม่ทั้งหมดอัตโนมัติ
+            if (pendingGroups.length === 0) {
+                await supabase
+                    .from('groups')
+                    .update({ last_sent_at: null })
+                    .eq('user_id', userId)
+                    .eq('is_selected', true);
+                pendingGroups = allSelectedGroups;
+            } else if (pendingGroups.length < allSelectedGroups.length) {
+                isResuming = true;
+            }
+
+            const alreadyDone = allSelectedGroups.length - pendingGroups.length;
+
+            queueState = {
+                isRunning: true,
+                targets: [...pendingGroups],
+                total: allSelectedGroups.length,
+                sent: alreadyDone,
+                failed: 0,
+                currentGroup: '-',
+                nextDelay: 0
+            };
+            userQueues.set(userId, queueState);
+        }
 
         (async () => {
             const client = new TelegramClient(
@@ -654,11 +730,11 @@ app.post('/api/run', authenticateUser, requireActiveLicense, async (req, res) =>
             }
 
             const originalPost = sourceMsg[0];
-            // ตรวจสอบว่าเป็นสื่อที่ส่งได้จริง (รูปภาพหรือไฟล์/วิดีโอ) ไม่ใช่ WebPage Preview เปล่า
             const hasValidMedia = originalPost.media &&
                 (originalPost.media.className === 'MessageMediaPhoto' || originalPost.media.className === 'MessageMediaDocument');
 
             while (queueState.isRunning && queueState.targets.length > 0) {
+                // ดึงกลุ่มถัดไปมาเตรียมส่ง (หากเกิด Error ระหว่างส่งหรือกดหยุดกลางคันจะคืนกลับเข้าคิวให้ทำต่อได้)
                 const target = queueState.targets.shift();
                 queueState.currentGroup = target.group_name;
 
@@ -670,7 +746,6 @@ app.post('/api/run', authenticateUser, requireActiveLicense, async (req, res) =>
                             file: originalPost.media
                         });
                     } else {
-                        // ส่งข้อความพร้อมตาราง/กรอบและอิโมจิพรีเมียมครบถ้วน (ไม่ติดป้าย Forwarded from)
                         await client.sendMessage(target.group_id, {
                             message: originalPost.message || '',
                             entities: originalPost.entities || undefined
@@ -678,6 +753,13 @@ app.post('/api/run', authenticateUser, requireActiveLicense, async (req, res) =>
                     }
 
                     queueState.sent++;
+                    // บันทึกว่ากลุ่มนี้ส่งเสร็จแล้วในรอบปัจจุบัน
+                    await supabase
+                        .from('groups')
+                        .update({ last_sent_at: new Date().toISOString() })
+                        .eq('user_id', userId)
+                        .eq('group_id', target.group_id);
+
                     await supabase.from('execution_logs').insert({
                         user_id: userId,
                         group_name: target.group_name,
@@ -685,7 +767,22 @@ app.post('/api/run', authenticateUser, requireActiveLicense, async (req, res) =>
                         message: `ยิงสำเร็จเข้ากลุ่ม: ${target.group_name}`
                     });
                 } catch (sendErr) {
-                    // หากกลุ่มปลายทางบล็อก Custom Emoji หรือไม่ให้ส่งรูปภาพ ให้ส่งเฉพาะข้อความล้วน
+                    // หากเกิดปัญหาการเชื่อมต่อขาดหาย (เช่น Network/FloodWait) ให้คืนกลุ่มกลับเข้าหัวคิวเพื่อส่งต่อรอบหน้า
+                    const errMsg = sendErr.message || '';
+                    if (errMsg.includes('TIMEOUT') || errMsg.includes('DISCONNECTED') || errMsg.includes('FLOOD')) {
+                        queueState.targets.unshift(target);
+                        queueState.isRunning = false;
+                        queueState.currentGroup = `- หยุดชั่วคราวเนื่องจากระบบเครือข่าย (${errMsg}) กด RUN เพื่อส่งต่อได้ทันที -`;
+                        await supabase.from('execution_logs').insert({
+                            user_id: userId,
+                            group_name: target.group_name,
+                            status: 'error',
+                            message: `หยุดชั่วคราว (คิวคงเหลือ ${queueState.targets.length} กลุ่ม): ${errMsg}`
+                        });
+                        break;
+                    }
+
+                    // ลองส่งข้อความล้วนสำรอง
                     try {
                         if (!originalPost.message) throw sendErr;
                         await client.sendMessage(target.group_id, {
@@ -693,6 +790,12 @@ app.post('/api/run', authenticateUser, requireActiveLicense, async (req, res) =>
                         });
 
                         queueState.sent++;
+                        await supabase
+                            .from('groups')
+                            .update({ last_sent_at: new Date().toISOString() })
+                            .eq('user_id', userId)
+                            .eq('group_id', target.group_id);
+
                         await supabase.from('execution_logs').insert({
                             user_id: userId,
                             group_name: target.group_name,
@@ -701,6 +804,13 @@ app.post('/api/run', authenticateUser, requireActiveLicense, async (req, res) =>
                         });
                     } catch (fallbackErr) {
                         queueState.failed++;
+                        // มาร์กว่าผ่านกลุ่มที่ส่งไม่ได้ (เช่น กลุ่มล็อกแชท) เพื่อไม่ให้วนติดซ้ำกลุ่มเดิม
+                        await supabase
+                            .from('groups')
+                            .update({ last_sent_at: new Date().toISOString() })
+                            .eq('user_id', userId)
+                            .eq('group_id', target.group_id);
+
                         await supabase.from('execution_logs').insert({
                             user_id: userId,
                             group_name: target.group_name,
@@ -722,30 +832,54 @@ app.post('/api/run', authenticateUser, requireActiveLicense, async (req, res) =>
                 }
             }
 
-            queueState.isRunning = false;
-            queueState.currentGroup = '- เสร็จสิ้นรอบการส่ง -';
-            queueState.nextDelay = 0;
+            // หากส่งครบทุกกลุ่มในคิวแล้ว ล้างคิวและรีเซ็ต last_sent_at เพื่อพร้อมสำหรับรอบถัดไป
+            if (queueState.targets.length === 0) {
+                queueState.isRunning = false;
+                queueState.currentGroup = '- เสร็จสิ้นรอบการส่งทั้งหมด -';
+                queueState.nextDelay = 0;
+                userQueues.delete(userId);
+                await supabase
+                    .from('groups')
+                    .update({ last_sent_at: null })
+                    .eq('user_id', userId)
+                    .eq('is_selected', true);
+            } else {
+                // กรณีกด STOP กลางคัน เก็บคิวที่เหลือไว้ใน userQueues เพื่อให้กด RUN ส่งต่อได้ทันที
+                queueState.isRunning = false;
+                queueState.currentGroup = `- หยุดชั่วคราว (ค้างส่งอีก ${queueState.targets.length} กลุ่ม) -`;
+                queueState.nextDelay = 0;
+            }
+
             await client.disconnect();
         })().catch(console.error);
 
-        return res.json({ success: true, message: `เริ่มต้นคิวการส่งโพสต์เฉพาะ ${groups.length} กลุ่มที่เลือกเรียบร้อย` });
+        const msgText = isResuming
+            ? `ดำเนินการส่งต่อจากงานที่ค้างไว้ (เหลืออีก ${queueState.targets.length} จาก ${queueState.total} กลุ่ม)`
+            : `เริ่มต้นคิวการส่งโพสต์เฉพาะ ${queueState.targets.length} กลุ่มที่เลือกเรียบร้อย`;
+
+        return res.json({ success: true, message: msgText });
     } catch (err) {
         return res.status(500).json({ success: false, message: err.message });
     }
 });
 
+// 10. สั่ง STOP คิว (หยุดการทำงานชั่วคราว โดยเก็บคิวที่เหลือไว้ให้ส่งต่อได้)
 app.post('/api/stop', authenticateUser, (req, res) => {
     const userId = req.user.id;
     const queue = userQueues.get(userId);
 
     if (queue) {
         queue.isRunning = false;
-        queue.currentGroup = '- หยุดการทำงาน -';
+        queue.currentGroup = `- หยุดชั่วคราว (ค้างส่งอีก ${queue.targets.length} กลุ่ม) -`;
         queue.nextDelay = 0;
-        userQueues.delete(userId);
     }
 
-    return res.json({ success: true, message: 'สั่งหยุดการทำงานเรียบร้อย' });
+    return res.json({
+        success: true,
+        message: queue && queue.targets.length > 0
+            ? `หยุดการทำงานชั่วคราว (ค้างอีก ${queue.targets.length} กลุ่ม กด RUN เพื่อส่งต่อได้ทันที)`
+            : 'สั่งหยุดการทำงานเรียบร้อย'
+    });
 });
 
 app.use(express.static(__dirname));
