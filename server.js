@@ -20,16 +20,28 @@ const TELEGRAM_API_HASH = process.env.TELEGRAM_API_HASH;
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-// Middleware ยืนยันตัวตนผู้ใช้
+// Middleware ยืนยันตัวตนผู้ใช้ (อัปเดตให้ตรวจสอบ Token และแจ้งสาเหตุชัดเจน)
 async function authenticateUser(req, res, next) {
     try {
         const authHeader = req.headers.authorization;
-        if (!authHeader) return res.status(401).json({ success: false, error: 'Unauthorized' });
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).json({ success: false, error: 'ไม่พบ Token กรุณาล็อกอินใหม่อีกครั้ง' });
+        }
 
         const token = authHeader.split(' ')[1];
+        if (!token || token === 'null' || token === 'undefined') {
+            return res.status(401).json({ success: false, error: 'Token ว่างเปล่า กรุณาออกจากระบบแล้วเข้าสู่ระบบใหม่' });
+        }
+
         const { data: { user }, error } = await supabase.auth.getUser(token);
 
-        if (error || !user) return res.status(401).json({ success: false, error: 'Invalid User Token' });
+        if (error || !user) {
+            console.error('Auth Error Detail:', error);
+            return res.status(401).json({ 
+                success: false, 
+                error: `ตรวจสอบสิทธิ์ไม่ผ่าน: ${error ? error.message : 'ไม่พบข้อมูลผู้ใช้'}` 
+            });
+        }
 
         req.user = user;
         next();
@@ -398,7 +410,6 @@ app.post('/api/run', authenticateUser, async (req, res) => {
         };
         userQueues.set(userId, queueState);
 
-        // รัน Background Job แยก
         (async () => {
             const client = new TelegramClient(
                 new StringSession(account.session_string),
@@ -478,7 +489,7 @@ app.post('/api/stop', authenticateUser, (req, res) => {
     return res.json({ success: true, message: 'สั่งหยุดการทำงานเรียบร้อย' });
 });
 
-// เสิร์ฟไฟล์หน้าเว็บ index.html โดยตรง (จบปัญหา Cannot GET /)
+// เสิร์ฟไฟล์หน้าเว็บ index.html โดยตรง
 app.use(express.static(__dirname));
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
