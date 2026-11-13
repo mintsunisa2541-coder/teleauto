@@ -1,7 +1,6 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const crypto = require('crypto');
 const dotenv = require('dotenv');
 const { createClient } = require('@supabase/supabase-js');
 const { TelegramClient, Api } = require('telegram');
@@ -27,11 +26,6 @@ const ENV_ADMINS = (process.env.ADMIN_EMAILS || '')
 const ADMIN_EMAILS = [...new Set([...DEFAULT_ADMINS, ...ENV_ADMINS])];
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-
-// สร้าง randomId 64-bit แบบไม่ต้องพึ่งแพ็กเกจภายนอก (Render Deploy ผ่าน 100%)
-function generateRandomLong() {
-    return crypto.randomBytes(8).readBigInt64BE();
-}
 
 async function authenticateUser(req, res, next) {
     try {
@@ -169,27 +163,6 @@ async function getLatestSavedPosts(client) {
         }
         return b.id - a.id;
     });
-}
-
-// ฟังก์ชันยิงโพสต์ตรงผ่าน Raw API เพื่อรักษาตาราง 100% + อิโมจิพรีเมียม + ไม่ติดป้าย Forwarded from
-async function sendRawFormattedPost(client, peer, text, entities, mediaBuffer) {
-    if (mediaBuffer) {
-        return await client.sendMessage(peer, {
-            message: text,
-            entities: entities,
-            file: mediaBuffer
-        });
-    }
-
-    return await client.invoke(
-        new Api.messages.SendMessage({
-            peer: peer,
-            message: text,
-            entities: entities,
-            randomId: generateRandomLong(),
-            noWebpage: true
-        })
-    );
 }
 
 app.get('/api/license/status', authenticateUser, async (req, res) => {
@@ -674,10 +647,9 @@ app.get('/api/telegram/saved-messages', authenticateUser, async (req, res) => {
         }
 
         const latest = realPosts[0];
-        const msgWithText = realPosts.find(m => m.message && m.message.trim().length > 0);
         const bodyText = (latest.message && latest.message.trim())
             ? latest.message
-            : (msgWithText ? msgWithText.message : '(โพสต์รูปภาพ/วิดีโอล้วน)');
+            : '(โพสต์รูปภาพ/วิดีโอ/สติกเกอร์)';
 
         const sentTime = latest.date
             ? new Date(latest.date * 1000).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok', dateStyle: 'short', timeStyle: 'short' })
@@ -736,7 +708,7 @@ app.get('/api/logs', authenticateUser, async (req, res) => {
     }
 });
 
-// 9. สั่ง RUN คิวการยิงโพสต์ (ใช้ Api.messages.SendMessage ส่งตาราง + อิโมจิพรีเมียมครบ 100%)
+// 9. สั่ง RUN คิวการยิงโพสต์ (Forward ข้อความล่าสุดจาก Saved Messages โดยตรง -> ตารางและอิโมจิพรีเมียมครบ 100%)
 app.post('/api/run', authenticateUser, requireActiveLicense, async (req, res) => {
     const userId = req.user.id;
     const { forceRestart } = req.body || {};
@@ -824,47 +796,18 @@ app.post('/api/run', authenticateUser, requireActiveLicense, async (req, res) =>
                 return;
             }
 
-            let targetPost = realPosts[0];
-            if ((!targetPost.message || targetPost.message.trim().length === 0) && realPosts.length > 1) {
-                const textPost = realPosts.find(m => m.message && m.message.trim().length > 0 && Math.abs((targetPost.date || 0) - (m.date || 0)) <= 120);
-                if (textPost) {
-                    targetPost = textPost;
-                }
-            }
-
-            const postText = targetPost.message || '';
-            const postEntities = targetPost.entities || [];
-
-            let mediaBuffer = null;
-            const mediaSource = realPosts[0];
-            const isRealMedia = mediaSource.media &&
-                (mediaSource.media.className === 'MessageMediaPhoto' || mediaSource.media.className === 'MessageMediaDocument');
-
-            if (isRealMedia) {
-                try {
-                    mediaBuffer = await client.downloadMedia(mediaSource, {});
-                    if (mediaBuffer && mediaSource.media.className === 'MessageMediaPhoto') {
-                        mediaBuffer.name = 'photo.jpg';
-                    }
-                } catch (dlErr) {
-                    console.error('Download media error:', dlErr.message);
-                }
-            }
-
-            if (!postText && !mediaBuffer) {
-                queueState.isRunning = false;
-                queueState.currentGroup = '- ไม่พบข้อความหรือรูปภาพใน Saved Messages กรุณาส่งโพสต์ใหม่ -';
-                await client.disconnect();
-                return;
-            }
+            const targetMsgId = realPosts[0].id;
 
             while (queueState.isRunning && queueState.targets.length > 0) {
                 const target = queueState.targets.shift();
                 queueState.currentGroup = target.group_name;
 
                 try {
-                    const peer = await client.getInputEntity(target.group_id);
-                    await sendRawFormattedPost(client, peer, postText, postEntities, mediaBuffer);
+                    // Forward โพสต์ล่าสุดจาก Saved Messages ('me') โดยตรงเพื่อรักษาตารางและอิโมจิพรีเมียม 100%
+                    await client.forwardMessages(target.group_id, {
+                        messages: [targetMsgId],
+                        fromPeer: 'me'
+                    });
 
                     queueState.sent++;
                     await supabase
@@ -877,7 +820,7 @@ app.post('/api/run', authenticateUser, requireActiveLicense, async (req, res) =>
                         user_id: userId,
                         group_name: target.group_name,
                         status: 'success',
-                        message: `ยิงสำเร็จ (ตาราง/อิโมจิครบ) เข้ากลุ่ม: ${target.group_name}`
+                        message: `ฟอร์เวิร์ดสำเร็จ (ตาราง/อิโมจิครบ) เข้ากลุ่ม: ${target.group_name}`
                     });
                 } catch (sendErr) {
                     const errMsg = sendErr.message || '';
@@ -894,41 +837,19 @@ app.post('/api/run', authenticateUser, requireActiveLicense, async (req, res) =>
                         break;
                     }
 
-                    // สำรอง: หากกลุ่มปิดรับ Custom Emoji ให้ตัดเฉพาะ CustomEmoji ออกแต่ยังรักษากรอบตารางไว้ทั้งหมด
-                    try {
-                        if (!postText) throw sendErr;
-                        const peer = await client.getInputEntity(target.group_id);
-                        const safeEntities = postEntities.filter(e => e.className !== 'MessageEntityCustomEmoji');
-                        await sendRawFormattedPost(client, peer, postText, safeEntities, mediaBuffer);
+                    queueState.failed++;
+                    await supabase
+                        .from('groups')
+                        .update({ last_sent_at: new Date().toISOString() })
+                        .eq('user_id', userId)
+                        .eq('group_id', target.group_id);
 
-                        queueState.sent++;
-                        await supabase
-                            .from('groups')
-                            .update({ last_sent_at: new Date().toISOString() })
-                            .eq('user_id', userId)
-                            .eq('group_id', target.group_id);
-
-                        await supabase.from('execution_logs').insert({
-                            user_id: userId,
-                            group_name: target.group_name,
-                            status: 'success',
-                            message: `ยิงสำเร็จ (รักษากรอบตาราง) เข้ากลุ่ม: ${target.group_name}`
-                        });
-                    } catch (fallbackErr) {
-                        queueState.failed++;
-                        await supabase
-                            .from('groups')
-                            .update({ last_sent_at: new Date().toISOString() })
-                            .eq('user_id', userId)
-                            .eq('group_id', target.group_id);
-
-                        await supabase.from('execution_logs').insert({
-                            user_id: userId,
-                            group_name: target.group_name,
-                            status: 'error',
-                            message: `ส่งไม่สำเร็จ: ${fallbackErr.message}`
-                        });
-                    }
+                    await supabase.from('execution_logs').insert({
+                        user_id: userId,
+                        group_name: target.group_name,
+                        status: 'error',
+                        message: `ส่งไม่สำเร็จ: ${errMsg}`
+                    });
                 }
 
                 if (queueState.targets.length > 0 && queueState.isRunning) {
@@ -964,7 +885,7 @@ app.post('/api/run', authenticateUser, requireActiveLicense, async (req, res) =>
 
         const msgText = isResuming
             ? `ดำเนินการส่งต่อจากงานที่ค้างไว้ (เหลืออีก ${queueState.targets.length} จาก ${queueState.total} กลุ่ม)`
-            : `เริ่มต้นคิวการส่งโพสต์เฉพาะ ${queueState.targets.length} กลุ่มที่เลือกเรียบร้อย`;
+            : `เริ่มต้นคิวการฟอร์เวิร์ดโพสต์เฉพาะ ${queueState.targets.length} กลุ่มที่เลือกเรียบร้อย`;
 
         return res.json({ success: true, message: msgText });
     } catch (err) {
