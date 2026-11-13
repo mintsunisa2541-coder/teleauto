@@ -594,7 +594,7 @@ app.get('/api/logs', authenticateUser, async (req, res) => {
     }
 });
 
-// 9. สั่ง RUN คิวการยิงโพสต์ (ส่งแบบโพสต์ใหม่ ไม่ติดป้าย Forwarded from และรักษาฟอร์แมตตาราง/อิโมจิพรีเมียมครบถ้วน)
+// 9. สั่ง RUN คิวการยิงโพสต์ (ส่งแบบโพสต์ใหม่ ไม่ติดป้าย Forwarded from และแก้ปัญหา MEDIA_EMPTY)
 app.post('/api/run', authenticateUser, requireActiveLicense, async (req, res) => {
     const userId = req.user.id;
 
@@ -654,30 +654,42 @@ app.post('/api/run', authenticateUser, requireActiveLicense, async (req, res) =>
             }
 
             const originalPost = sourceMsg[0];
+            // ตรวจสอบว่าเป็นสื่อที่ส่งได้จริง (รูปภาพหรือไฟล์/วิดีโอ) ไม่ใช่ WebPage Preview เปล่า
+            const hasValidMedia = originalPost.media &&
+                (originalPost.media.className === 'MessageMediaPhoto' || originalPost.media.className === 'MessageMediaDocument');
 
             while (queueState.isRunning && queueState.targets.length > 0) {
                 const target = queueState.targets.shift();
                 queueState.currentGroup = target.group_name;
 
                 try {
-                    // ส่งออบเจ็กต์ข้อความต้นฉบับเป็นโพสต์ใหม่ (ไม่ติดป้าย Forwarded from + รักษาตาราง/อิโมจิพรีเมียม/สื่อครบถ้วน)
-                    await client.sendMessage(target.group_id, {
-                        message: originalPost
-                    });
+                    if (hasValidMedia) {
+                        await client.sendMessage(target.group_id, {
+                            message: originalPost.message || '',
+                            entities: originalPost.entities || undefined,
+                            file: originalPost.media
+                        });
+                    } else {
+                        // ส่งข้อความพร้อมตาราง/กรอบและอิโมจิพรีเมียมครบถ้วน (ไม่ติดป้าย Forwarded from)
+                        await client.sendMessage(target.group_id, {
+                            message: originalPost.message || '',
+                            entities: originalPost.entities || undefined
+                        });
+                    }
 
                     queueState.sent++;
                     await supabase.from('execution_logs').insert({
                         user_id: userId,
                         group_name: target.group_name,
                         status: 'success',
-                        message: `ยิงสำเร็จ (โพสต์ใหม่) เข้ากลุ่ม: ${target.group_name}`
+                        message: `ยิงสำเร็จเข้ากลุ่ม: ${target.group_name}`
                     });
                 } catch (sendErr) {
-                    // กรณีกลุ่มปลายทางบล็อก Custom Emoji หรือฟอร์แมตบางอย่าง ให้ลองส่งข้อความ+สื่อสำรองอัตโนมัติ
+                    // หากกลุ่มปลายทางบล็อก Custom Emoji หรือไม่ให้ส่งรูปภาพ ให้ส่งเฉพาะข้อความล้วน
                     try {
+                        if (!originalPost.message) throw sendErr;
                         await client.sendMessage(target.group_id, {
-                            message: originalPost.message || '',
-                            file: originalPost.media || undefined
+                            message: originalPost.message
                         });
 
                         queueState.sent++;
@@ -685,7 +697,7 @@ app.post('/api/run', authenticateUser, requireActiveLicense, async (req, res) =>
                             user_id: userId,
                             group_name: target.group_name,
                             status: 'success',
-                            message: `ยิงสำเร็จเข้ากลุ่ม: ${target.group_name}`
+                            message: `ยิงสำเร็จ (ข้อความ) เข้ากลุ่ม: ${target.group_name}`
                         });
                     } catch (fallbackErr) {
                         queueState.failed++;
