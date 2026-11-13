@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 const dotenv = require('dotenv');
 const { createClient } = require('@supabase/supabase-js');
 const { TelegramClient } = require('telegram');
@@ -475,6 +476,12 @@ app.post('/api/stop', authenticateUser, (req, res) => {
     }
 
     return res.json({ success: true, message: 'สั่งหยุดการทำงานเรียบร้อย' });
+});
+
+// เสิร์ฟไฟล์หน้าเว็บ index.html โดยตรง (จบปัญหา Cannot GET /)
+app.use(express.static(__dirname));
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 // เริ่มต้น Express Server
