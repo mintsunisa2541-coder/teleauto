@@ -3,7 +3,7 @@ const cors = require('cors');
 const path = require('path');
 const dotenv = require('dotenv');
 const { createClient } = require('@supabase/supabase-js');
-const { TelegramClient } = require('telegram');
+const { TelegramClient, Api } = require('telegram');
 const { StringSession } = require('telegram/sessions');
 
 dotenv.config();
@@ -20,7 +20,7 @@ const TELEGRAM_API_HASH = process.env.TELEGRAM_API_HASH;
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-// Middleware ยืนยันตัวตนผู้ใช้ (อัปเดตให้ตรวจสอบ Token และแจ้งสาเหตุชัดเจน)
+// Middleware ยืนยันตัวตนผู้ใช้
 async function authenticateUser(req, res, next) {
     try {
         const authHeader = req.headers.authorization;
@@ -36,7 +36,6 @@ async function authenticateUser(req, res, next) {
         const { data: { user }, error } = await supabase.auth.getUser(token);
 
         if (error || !user) {
-            console.error('Auth Error Detail:', error);
             return res.status(401).json({ 
                 success: false, 
                 error: `ตรวจสอบสิทธิ์ไม่ผ่าน: ${error ? error.message : 'ไม่พบข้อมูลผู้ใช้'}` 
@@ -50,11 +49,9 @@ async function authenticateUser(req, res, next) {
     }
 }
 
-// Memory สถานะคิวและล็อกอินชั่วคราว
 const userQueues = new Map();
 const loginClients = new Map();
 
-// Helper สุ่มเวลาหน่วง
 const randomDelay = (min = 35, max = 85) => {
     return Math.floor(Math.random() * (max - min + 1) + min) * 1000;
 };
@@ -123,7 +120,7 @@ app.post('/api/telegram/send-code', authenticateUser, async (req, res) => {
     }
 });
 
-// 3. ยืนยัน OTP และ 2FA แล้วบันทึก Session ลง Supabase
+// 3. ยืนยัน OTP และ 2FA แล้วบันทึก Session ลง Supabase (แก้ไขจุดที่ Error แล้ว)
 app.post('/api/telegram/verify-code', authenticateUser, async (req, res) => {
     const { code, password } = req.body;
     const userId = req.user.id;
@@ -138,7 +135,7 @@ app.post('/api/telegram/verify-code', authenticateUser, async (req, res) => {
     try {
         try {
             await client.invoke(
-                new (require('telegram/tl').requests.auth.SignIn)({
+                new Api.auth.SignIn({
                     phoneNumber: phone,
                     phoneCodeHash: phoneCodeHash,
                     phoneCode: code.trim(),
@@ -153,11 +150,13 @@ app.post('/api/telegram/verify-code', authenticateUser, async (req, res) => {
                         error: 'บัญชีนี้เปิดใช้งาน 2FA กรุณากรอกรหัสผ่าน 2-Step' 
                     });
                 }
-                await client.signInWithPassword({
-                    apiId: TELEGRAM_API_ID,
-                    apiHash: TELEGRAM_API_HASH,
-                    password: password.trim()
-                });
+                await client.signInWithPassword(
+                    { apiId: TELEGRAM_API_ID, apiHash: TELEGRAM_API_HASH },
+                    {
+                        password: async () => password.trim(),
+                        onError: (err) => { throw err; }
+                    }
+                );
             } else {
                 throw signInErr;
             }
@@ -495,7 +494,6 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// เริ่มต้น Express Server
 app.listen(PORT, () => {
     console.log(`🚀 TeleAuto Multi-Tenant Server กำลังทำงานที่พอร์ต ${PORT}`);
 });
