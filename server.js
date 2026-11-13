@@ -473,7 +473,6 @@ app.post('/api/telegram/sync-groups', authenticateUser, requireActiveLicense, as
 app.post('/api/groups/toggle', authenticateUser, async (req, res) => {
     const { id, group_id, is_selected } = req.body;
     try {
-        // หากติ๊กเลือกใหม่ ให้ล้างสถานะค้างส่งของกลุ่มนั้นเพื่อให้พร้อมยิงทันที
         const updatePayload = {
             is_selected: Boolean(is_selected),
             updated_at: new Date()
@@ -498,7 +497,6 @@ app.post('/api/groups/toggle', authenticateUser, async (req, res) => {
         const { error } = await query;
         if (error) throw error;
 
-        // ล้างคิวเก่าในหน่วยความจำเพื่อให้คำนวณรายการที่เลือกใหม่ตรงกัน
         const q = userQueues.get(req.user.id);
         if (q && !q.isRunning) {
             userQueues.delete(req.user.id);
@@ -539,7 +537,6 @@ app.post('/api/groups/toggle-all', authenticateUser, async (req, res) => {
     }
 });
 
-// รีเซ็ตสถานะคิวทั้งหมดเพื่อให้เริ่มส่งตั้งแต่กลุ่มแรกใหม่
 app.post('/api/queue/reset', authenticateUser, async (req, res) => {
     const userId = req.user.id;
     try {
@@ -579,16 +576,22 @@ app.get('/api/telegram/saved-messages', authenticateUser, async (req, res) => {
         );
 
         await client.connect();
-        const messages = await client.getMessages('me', { limit: 1 });
+        const messages = await client.getMessages('me', { limit: 5 });
         await client.disconnect();
 
         if (!messages || messages.length === 0) {
             return res.json({ success: false, message: 'ไม่มีข้อความใน Saved Messages' });
         }
 
+        const latest = messages[0];
+        const msgWithText = messages.find(m => m.message && m.message.trim().length > 0);
+        const displayText = (latest.message && latest.message.trim())
+            ? latest.message
+            : (msgWithText ? `[สื่อแนบ + ข้อความ]:\n${msgWithText.message}` : '(โพสต์รูปภาพ/วิดีโอ หรือสติกเกอร์ล้วน)');
+
         return res.json({
             success: true,
-            messages: [{ text: messages[0].message || '', id: messages[0].id }]
+            messages: [{ text: displayText, id: latest.id }]
         });
     } catch (err) {
         return res.status(500).json({ success: false, message: err.message });
@@ -637,7 +640,7 @@ app.get('/api/logs', authenticateUser, async (req, res) => {
     }
 });
 
-// 9. สั่ง RUN คิวการยิงโพสต์ (รองรับการส่งต่อจากงานเดิมที่ค้างไว้เมื่อกด STOP หรือเกิดข้อผิดพลาด)
+// 9. สั่ง RUN คิวการยิงโพสต์ (รองรับส่งต่อจากงานค้าง + ดาวน์โหลดสื่อ/รูปภาพส่งใหม่ไม่ติด Forwarded from)
 app.post('/api/run', authenticateUser, requireActiveLicense, async (req, res) => {
     const userId = req.user.id;
     const { forceRestart } = req.body || {};
@@ -660,13 +663,11 @@ app.post('/api/run', authenticateUser, requireActiveLicense, async (req, res) =>
         let queueState = null;
         let isResuming = false;
 
-        // ตรวจสอบว่ามีคิวเดิมที่กดหยุดไว้และยังส่งไม่ครบหรือไม่
         if (!forceRestart && existingQueue && existingQueue.targets && existingQueue.targets.length > 0) {
             queueState = existingQueue;
             queueState.isRunning = true;
             isResuming = true;
         } else {
-            // ดึงกลุ่มที่ติ๊กเลือกทั้งหมด เรียงตามชื่อ
             const { data: allSelectedGroups, error: groupErr } = await supabase
                 .from('groups')
                 .select('*')
@@ -680,12 +681,10 @@ app.post('/api/run', authenticateUser, requireActiveLicense, async (req, res) =>
                 return res.status(400).json({ success: false, message: 'กรุณาติ๊กเลือกกลุ่มที่ต้องการส่งอย่างน้อย 1 กลุ่มก่อนกด RUN' });
             }
 
-            // กรองเฉพาะกลุ่มที่ยังไม่ถูกส่งในรอบนี้ (last_sent_at IS NULL) เพื่อส่งต่อจากงานที่ค้างไว้แม้อาจจะรีสตาร์ทเซิร์ฟเวอร์ไปแล้ว
             let pendingGroups = forceRestart
                 ? allSelectedGroups
                 : allSelectedGroups.filter(g => !g.last_sent_at);
 
-            // หากส่งครบทุกกลุ่มไปแล้วในรอบก่อน ให้เริ่มรอบใหม่ทั้งหมดอัตโนมัติ
             if (pendingGroups.length === 0) {
                 await supabase
                     .from('groups')
@@ -720,40 +719,72 @@ app.post('/api/run', authenticateUser, requireActiveLicense, async (req, res) =>
             );
 
             await client.connect();
-            const sourceMsg = await client.getMessages('me', { limit: 1 });
+            const recentMsgs = await client.getMessages('me', { limit: 5 });
 
-            if (!sourceMsg || sourceMsg.length === 0) {
+            if (!recentMsgs || recentMsgs.length === 0) {
                 queueState.isRunning = false;
                 queueState.currentGroup = '- ไม่พบโพสต์ใน Saved Messages -';
                 await client.disconnect();
                 return;
             }
 
-            const originalPost = sourceMsg[0];
-            const hasValidMedia = originalPost.media &&
-                (originalPost.media.className === 'MessageMediaPhoto' || originalPost.media.className === 'MessageMediaDocument');
+            const latestPost = recentMsgs[0];
+            let postText = (latestPost.message || '').trim();
+            let postEntities = latestPost.entities || undefined;
+
+            // หากโพสต์ล่าสุดเป็นรูปภาพ/สื่อล้วนที่ไม่มีแคปชั่น ให้ดึงข้อความจากโพสต์ก่อนหน้า (ถ้าส่งพร้อมกันภายใน 2 นาที)
+            if (!postText && recentMsgs.length > 1) {
+                const prevPost = recentMsgs[1];
+                const timeDiff = Math.abs((latestPost.date || 0) - (prevPost.date || 0));
+                if (prevPost.message && prevPost.message.trim() && timeDiff <= 120) {
+                    postText = prevPost.message.trim();
+                    postEntities = prevPost.entities || undefined;
+                }
+            }
+
+            // ดาวน์โหลดรูปภาพ/วิดีโอมาเก็บเป็น Buffer (แก้ปัญหา MEDIA_EMPTY และส่งได้โดยไม่ติดป้าย Forwarded from)
+            let mediaBuffer = null;
+            const isRealMedia = latestPost.media &&
+                (latestPost.media.className === 'MessageMediaPhoto' || latestPost.media.className === 'MessageMediaDocument');
+
+            if (isRealMedia) {
+                try {
+                    mediaBuffer = await client.downloadMedia(latestPost, {});
+                    if (mediaBuffer && latestPost.media.className === 'MessageMediaPhoto') {
+                        mediaBuffer.name = 'photo.jpg';
+                    }
+                } catch (dlErr) {
+                    console.error('Download media error:', dlErr.message);
+                }
+            }
+
+            // ตรวจสอบว่ามีทั้งข้อความและไฟล์ว่างเปล่าหรือไม่
+            if (!postText && !mediaBuffer) {
+                queueState.isRunning = false;
+                queueState.currentGroup = '- ข้อความใน Saved Messages ว่างเปล่า กรุณาพิมพ์ข้อความหรือส่งรูปใหม่ -';
+                await client.disconnect();
+                return;
+            }
 
             while (queueState.isRunning && queueState.targets.length > 0) {
-                // ดึงกลุ่มถัดไปมาเตรียมส่ง (หากเกิด Error ระหว่างส่งหรือกดหยุดกลางคันจะคืนกลับเข้าคิวให้ทำต่อได้)
                 const target = queueState.targets.shift();
                 queueState.currentGroup = target.group_name;
 
                 try {
-                    if (hasValidMedia) {
+                    if (mediaBuffer) {
                         await client.sendMessage(target.group_id, {
-                            message: originalPost.message || '',
-                            entities: originalPost.entities || undefined,
-                            file: originalPost.media
+                            message: postText || '',
+                            entities: postEntities,
+                            file: mediaBuffer
                         });
                     } else {
                         await client.sendMessage(target.group_id, {
-                            message: originalPost.message || '',
-                            entities: originalPost.entities || undefined
+                            message: postText,
+                            entities: postEntities
                         });
                     }
 
                     queueState.sent++;
-                    // บันทึกว่ากลุ่มนี้ส่งเสร็จแล้วในรอบปัจจุบัน
                     await supabase
                         .from('groups')
                         .update({ last_sent_at: new Date().toISOString() })
@@ -767,7 +798,6 @@ app.post('/api/run', authenticateUser, requireActiveLicense, async (req, res) =>
                         message: `ยิงสำเร็จเข้ากลุ่ม: ${target.group_name}`
                     });
                 } catch (sendErr) {
-                    // หากเกิดปัญหาการเชื่อมต่อขาดหาย (เช่น Network/FloodWait) ให้คืนกลุ่มกลับเข้าหัวคิวเพื่อส่งต่อรอบหน้า
                     const errMsg = sendErr.message || '';
                     if (errMsg.includes('TIMEOUT') || errMsg.includes('DISCONNECTED') || errMsg.includes('FLOOD')) {
                         queueState.targets.unshift(target);
@@ -782,11 +812,11 @@ app.post('/api/run', authenticateUser, requireActiveLicense, async (req, res) =>
                         break;
                     }
 
-                    // ลองส่งข้อความล้วนสำรอง
+                    // สำรอง: หากกลุ่มบล็อก Custom Emoji หรือบล็อกรูปภาพ ให้ส่งเฉพาะข้อความล้วน
                     try {
-                        if (!originalPost.message) throw sendErr;
+                        if (!postText) throw sendErr;
                         await client.sendMessage(target.group_id, {
-                            message: originalPost.message
+                            message: postText
                         });
 
                         queueState.sent++;
@@ -804,7 +834,6 @@ app.post('/api/run', authenticateUser, requireActiveLicense, async (req, res) =>
                         });
                     } catch (fallbackErr) {
                         queueState.failed++;
-                        // มาร์กว่าผ่านกลุ่มที่ส่งไม่ได้ (เช่น กลุ่มล็อกแชท) เพื่อไม่ให้วนติดซ้ำกลุ่มเดิม
                         await supabase
                             .from('groups')
                             .update({ last_sent_at: new Date().toISOString() })
@@ -832,7 +861,6 @@ app.post('/api/run', authenticateUser, requireActiveLicense, async (req, res) =>
                 }
             }
 
-            // หากส่งครบทุกกลุ่มในคิวแล้ว ล้างคิวและรีเซ็ต last_sent_at เพื่อพร้อมสำหรับรอบถัดไป
             if (queueState.targets.length === 0) {
                 queueState.isRunning = false;
                 queueState.currentGroup = '- เสร็จสิ้นรอบการส่งทั้งหมด -';
@@ -844,7 +872,6 @@ app.post('/api/run', authenticateUser, requireActiveLicense, async (req, res) =>
                     .eq('user_id', userId)
                     .eq('is_selected', true);
             } else {
-                // กรณีกด STOP กลางคัน เก็บคิวที่เหลือไว้ใน userQueues เพื่อให้กด RUN ส่งต่อได้ทันที
                 queueState.isRunning = false;
                 queueState.currentGroup = `- หยุดชั่วคราว (ค้างส่งอีก ${queueState.targets.length} กลุ่ม) -`;
                 queueState.nextDelay = 0;
@@ -863,7 +890,6 @@ app.post('/api/run', authenticateUser, requireActiveLicense, async (req, res) =>
     }
 });
 
-// 10. สั่ง STOP คิว (หยุดการทำงานชั่วคราว โดยเก็บคิวที่เหลือไว้ให้ส่งต่อได้)
 app.post('/api/stop', authenticateUser, (req, res) => {
     const userId = req.user.id;
     const queue = userQueues.get(userId);
