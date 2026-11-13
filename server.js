@@ -20,7 +20,6 @@ const TELEGRAM_API_HASH = process.env.TELEGRAM_API_HASH;
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-// Middleware ยืนยันตัวตนผู้ใช้
 async function authenticateUser(req, res, next) {
     try {
         const authHeader = req.headers.authorization;
@@ -56,7 +55,6 @@ const randomDelay = (min = 35, max = 85) => {
     return Math.floor(Math.random() * (max - min + 1) + min) * 1000;
 };
 
-// 1. ตรวจสอบสถานะสิทธิ์ VIP / Trial
 app.get('/api/license/status', authenticateUser, async (req, res) => {
     const userId = req.user.id;
     try {
@@ -83,7 +81,6 @@ app.get('/api/license/status', authenticateUser, async (req, res) => {
     }
 });
 
-// 2. ขอรหัส OTP ส่งเข้า Telegram
 app.post('/api/telegram/send-code', authenticateUser, async (req, res) => {
     const { phone } = req.body;
     const userId = req.user.id;
@@ -120,7 +117,6 @@ app.post('/api/telegram/send-code', authenticateUser, async (req, res) => {
     }
 });
 
-// 3. ยืนยัน OTP และ 2FA แล้วบันทึก Session ลง Supabase
 app.post('/api/telegram/verify-code', authenticateUser, async (req, res) => {
     const { code, password } = req.body;
     const userId = req.user.id;
@@ -193,18 +189,15 @@ app.post('/api/telegram/verify-code', authenticateUser, async (req, res) => {
     }
 });
 
-// 3.5 ตัดการเชื่อมต่อบัญชี Telegram และล้างรายการกลุ่มของบัญชีเดิม
 app.delete('/api/telegram/disconnect', authenticateUser, async (req, res) => {
     const userId = req.user.id;
     try {
-        // หยุดคิวที่กำลังทำงานอยู่ก่อน (ถ้ามี)
         const queue = userQueues.get(userId);
         if (queue) {
             queue.isRunning = false;
             userQueues.delete(userId);
         }
 
-        // ลบรายการกลุ่มและบัญชีออกจาก Supabase
         await supabase.from('groups').delete().eq('user_id', userId);
         const { error } = await supabase.from('accounts').delete().eq('user_id', userId);
 
@@ -219,7 +212,7 @@ app.delete('/api/telegram/disconnect', authenticateUser, async (req, res) => {
     }
 });
 
-// 4. สแกนและดึงกลุ่ม Telegram ของผู้ใช้
+// สแกนและดึงกลุ่ม Telegram (ค่าเริ่มต้น is_selected: false เพื่อป้องกันการเผลอยิงทุกกลุ่ม)
 app.post('/api/telegram/sync-groups', authenticateUser, async (req, res) => {
     const userId = req.user.id;
 
@@ -271,7 +264,7 @@ app.post('/api/telegram/sync-groups', authenticateUser, async (req, res) => {
                             user_id: userId,
                             group_id: rawId,
                             group_name: dialog.title || 'กลุ่มไม่มีชื่อ',
-                            is_selected: true,
+                            is_selected: false,
                             updated_at: new Date()
                         });
                     }
@@ -292,7 +285,7 @@ app.post('/api/telegram/sync-groups', authenticateUser, async (req, res) => {
 
         return res.json({
             success: true,
-            message: `ดึงกลุ่มสำเร็จทั้งหมด ${validGroups.length} กลุ่ม`,
+            message: `ดึงกลุ่มสำเร็จทั้งหมด ${validGroups.length} กลุ่ม กรุณาติ๊กเลือกกลุ่มที่ต้องการยิงโพสต์`,
             count: validGroups.length
         });
     } catch (err) {
@@ -301,30 +294,38 @@ app.post('/api/telegram/sync-groups', authenticateUser, async (req, res) => {
     }
 });
 
-// 5. สลับสถานะกลุ่ม (เปิด/ปิด)
+// สลับสถานะกลุ่มรายตัว (รองรับทั้ง id และ group_id)
 app.post('/api/groups/toggle', authenticateUser, async (req, res) => {
-    const { id, is_selected } = req.body;
+    const { id, group_id, is_selected } = req.body;
     try {
-        const { error } = await supabase
+        let query = supabase
             .from('groups')
-            .update({ is_selected, updated_at: new Date() })
-            .eq('id', id)
+            .update({ is_selected: Boolean(is_selected), updated_at: new Date() })
             .eq('user_id', req.user.id);
 
+        if (id) {
+            query = query.eq('id', id);
+        } else if (group_id) {
+            query = query.eq('group_id', group_id);
+        } else {
+            return res.status(400).json({ success: false, error: 'ไม่พบรหัสอ้างอิงกลุ่ม' });
+        }
+
+        const { error } = await query;
         if (error) throw error;
-        return res.json({ success: true });
+        return res.json({ success: true, is_selected: Boolean(is_selected) });
     } catch (err) {
         return res.status(500).json({ success: false, error: err.message });
     }
 });
 
-// 6. สลับสถานะทุกกลุ่ม
+// สลับสถานะทุกกลุ่ม
 app.post('/api/groups/toggle-all', authenticateUser, async (req, res) => {
     const { is_selected } = req.body;
     try {
         const { error } = await supabase
             .from('groups')
-            .update({ is_selected, updated_at: new Date() })
+            .update({ is_selected: Boolean(is_selected), updated_at: new Date() })
             .eq('user_id', req.user.id);
 
         if (error) throw error;
@@ -334,7 +335,6 @@ app.post('/api/groups/toggle-all', authenticateUser, async (req, res) => {
     }
 });
 
-// 7. พรีวิวข้อความจาก Saved Messages
 app.get('/api/telegram/saved-messages', authenticateUser, async (req, res) => {
     const userId = req.user.id;
     try {
@@ -371,7 +371,6 @@ app.get('/api/telegram/saved-messages', authenticateUser, async (req, res) => {
     }
 });
 
-// 8. ตรวจสอบสถานะคิวการยิงสด
 app.get('/api/status', authenticateUser, (req, res) => {
     const userId = req.user.id;
     const queue = userQueues.get(userId);
@@ -396,7 +395,6 @@ app.get('/api/status', authenticateUser, (req, res) => {
     });
 });
 
-// 8.5 ดึงประวัติการส่งย้อนหลัง (Execution Logs)
 app.get('/api/logs', authenticateUser, async (req, res) => {
     const userId = req.user.id;
     try {
@@ -414,7 +412,7 @@ app.get('/api/logs', authenticateUser, async (req, res) => {
     }
 });
 
-// 9. สั่ง RUN คิวการยิงโพสต์
+// สั่ง RUN เฉพาะกลุ่มที่ติ๊กเลือก (is_selected === true) เท่านั้น
 app.post('/api/run', authenticateUser, async (req, res) => {
     const userId = req.user.id;
 
@@ -423,14 +421,16 @@ app.post('/api/run', authenticateUser, async (req, res) => {
     }
 
     try {
-        const { data: groups } = await supabase
+        const { data: groups, error: groupErr } = await supabase
             .from('groups')
             .select('*')
             .eq('user_id', userId)
             .eq('is_selected', true);
 
+        if (groupErr) throw groupErr;
+
         if (!groups || groups.length === 0) {
-            return res.status(400).json({ success: false, message: 'ไม่พบกลุ่มที่ล็อกเลือกไว้ กรุณาเลือกล็อกกลุ่มก่อน' });
+            return res.status(400).json({ success: false, message: 'กรุณาติ๊กเลือกกลุ่มที่ต้องการส่งอย่างน้อย 1 กลุ่มก่อนกด RUN' });
         }
 
         const { data: account } = await supabase
@@ -511,13 +511,12 @@ app.post('/api/run', authenticateUser, async (req, res) => {
             await client.disconnect();
         })().catch(console.error);
 
-        return res.json({ success: true, message: `เริ่มต้นคิวการส่งโพสต์จำนวน ${groups.length} กลุ่มเรียบร้อย` });
+        return res.json({ success: true, message: `เริ่มต้นคิวการส่งโพสต์เฉพาะ ${groups.length} กลุ่มที่เลือกเรียบร้อย` });
     } catch (err) {
         return res.status(500).json({ success: false, message: err.message });
     }
 });
 
-// 10. สั่ง STOP คิว
 app.post('/api/stop', authenticateUser, (req, res) => {
     const userId = req.user.id;
     const queue = userQueues.get(userId);
@@ -532,7 +531,6 @@ app.post('/api/stop', authenticateUser, (req, res) => {
     return res.json({ success: true, message: 'สั่งหยุดการทำงานเรียบร้อย' });
 });
 
-// เสิร์ฟไฟล์หน้าเว็บ index.html โดยตรง
 app.use(express.static(__dirname));
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
