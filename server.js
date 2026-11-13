@@ -103,17 +103,35 @@ const randomDelay = (min = 35, max = 85) => {
     return Math.floor(Math.random() * (max - min + 1) + min) * 1000;
 };
 
-// ฟังก์ชันดึงโพสต์ล่าสุดจริงๆ จาก Saved Messages (รองรับทั้งแบบปกติและแบบแยกหัวข้อย่อย Topics)
+// ฟังก์ชันดึงโพสต์ล่าสุดจริงๆ จาก Saved Messages เสมอ (รองรับทั้งโหมดรวมข้อความ และโหมดแยกหัวข้อย่อย Topics)
 async function getLatestSavedPosts(client) {
     let allMsgs = [];
 
+    // 1. ดึงจากห้อง Saved Messages หลัก (View as Messages / General)
     try {
-        const regularMsgs = await client.getMessages('me', { limit: 20 });
+        const regularMsgs = await client.getMessages('me', { limit: 25 });
         if (regularMsgs && regularMsgs.length > 0) {
             allMsgs.push(...regularMsgs);
         }
     } catch (e) {}
 
+    // 2. ดึงจาก Saved Dialogs / Topics ย่อยทั้งหมด (กรณีเปิดโหมดแยกตามแชท หรือ Forward มาจากที่อื่น)
+    try {
+        const savedDialogs = await client.invoke(
+            new Api.messages.GetSavedDialogs({
+                offsetDate: 0,
+                offsetId: 0,
+                offsetPeer: new Api.InputPeerEmpty(),
+                limit: 20,
+                hash: 0
+            })
+        );
+        if (savedDialogs && savedDialogs.messages && savedDialogs.messages.length > 0) {
+            allMsgs.push(...savedDialogs.messages);
+        }
+    } catch (e) {}
+
+    // 3. ค้นหาข้อความล่าสุดใน InputPeerSelf โดยตรง
     try {
         const searchRes = await client.invoke(
             new Api.messages.Search({
@@ -124,7 +142,7 @@ async function getLatestSavedPosts(client) {
                 maxDate: 0,
                 offsetId: 0,
                 addOffset: 0,
-                limit: 20,
+                limit: 25,
                 maxId: 0,
                 minId: 0,
                 hash: 0
@@ -135,15 +153,21 @@ async function getLatestSavedPosts(client) {
         }
     } catch (e) {}
 
-    // ลบรายการซ้ำด้วย id และเรียงจากใหม่ไปเก่า (id มากสุดอยู่บนสุด)
+    // กรองเฉพาะข้อความจริง (ไม่เอา MessageService เช่น ปักหมุด) และตัดรายการซ้ำด้วย id
     const uniqueMap = new Map();
     for (const m of allMsgs) {
-        if (m && m.className === 'Message' && (m.message || m.media)) {
+        if (m && m.className === 'Message' && ((m.message && m.message.trim().length > 0) || m.media)) {
             uniqueMap.set(m.id, m);
         }
     }
 
-    return Array.from(uniqueMap.values()).sort((a, b) => b.id - a.id);
+    // เรียงจากใหม่ล่าสุดไปเก่าสุด (เช็กทั้งเวลา date และรหัส id สูงสุด)
+    return Array.from(uniqueMap.values()).sort((a, b) => {
+        if ((b.date || 0) !== (a.date || 0)) {
+            return (b.date || 0) - (a.date || 0);
+        }
+        return b.id - a.id;
+    });
 }
 
 app.get('/api/license/status', authenticateUser, async (req, res) => {
@@ -633,7 +657,11 @@ app.get('/api/telegram/saved-messages', authenticateUser, async (req, res) => {
             ? latest.message
             : (msgWithText ? msgWithText.message : '(โพสต์รูปภาพ/วิดีโอล้วน)');
 
-        const headerInfo = `📱 ดึงจากบัญชี: ${me.firstName || 'Telegram'} (+${me.phone || account.phone})\n----------------------------------------\n`;
+        const sentTime = latest.date
+            ? new Date(latest.date * 1000).toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' })
+            : '';
+
+        const headerInfo = `📱 ดึงจากบัญชี: ${me.firstName || 'Telegram'} (+${me.phone || account.phone})${sentTime ? ` | 🕒 โพสต์ล่าสุดเวลา: ${sentTime}` : ''}\n----------------------------------------\n`;
 
         return res.json({
             success: true,
@@ -686,7 +714,7 @@ app.get('/api/logs', authenticateUser, async (req, res) => {
     }
 });
 
-// 9. สั่ง RUN คิวการยิงโพสต์ (รองรับ Saved Messages Topics + ตาราง/อิโมจิพรีเมียมครบ + ส่งต่อคิวค้าง)
+// 9. สั่ง RUN คิวการยิงโพสต์ (ดึงโพสต์ล่าสุดเสมอ + รักษาตาราง/อิโมจิพรีเมียมครบ + ส่งต่อคิวค้าง)
 app.post('/api/run', authenticateUser, requireActiveLicense, async (req, res) => {
     const userId = req.user.id;
     const { forceRestart } = req.body || {};
@@ -776,7 +804,7 @@ app.post('/api/run', authenticateUser, requireActiveLicense, async (req, res) =>
 
             let targetPost = realPosts[0];
             if ((!targetPost.message || targetPost.message.trim().length === 0) && realPosts.length > 1) {
-                const textPost = realPosts.find(m => m.message && m.message.trim().length > 0);
+                const textPost = realPosts.find(m => m.message && m.message.trim().length > 0 && Math.abs((targetPost.date || 0) - (m.date || 0)) <= 120);
                 if (textPost) {
                     targetPost = textPost;
                 }
