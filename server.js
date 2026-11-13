@@ -120,7 +120,7 @@ app.post('/api/telegram/send-code', authenticateUser, async (req, res) => {
     }
 });
 
-// 3. ยืนยัน OTP และ 2FA แล้วบันทึก Session ลง Supabase (แก้ไขจุดที่ Error แล้ว)
+// 3. ยืนยัน OTP และ 2FA แล้วบันทึก Session ลง Supabase
 app.post('/api/telegram/verify-code', authenticateUser, async (req, res) => {
     const { code, password } = req.body;
     const userId = req.user.id;
@@ -189,6 +189,32 @@ app.post('/api/telegram/verify-code', authenticateUser, async (req, res) => {
         });
     } catch (err) {
         console.error('Verify Code Error:', err);
+        return res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// 3.5 ตัดการเชื่อมต่อบัญชี Telegram และล้างรายการกลุ่มของบัญชีเดิม
+app.delete('/api/telegram/disconnect', authenticateUser, async (req, res) => {
+    const userId = req.user.id;
+    try {
+        // หยุดคิวที่กำลังทำงานอยู่ก่อน (ถ้ามี)
+        const queue = userQueues.get(userId);
+        if (queue) {
+            queue.isRunning = false;
+            userQueues.delete(userId);
+        }
+
+        // ลบรายการกลุ่มและบัญชีออกจาก Supabase
+        await supabase.from('groups').delete().eq('user_id', userId);
+        const { error } = await supabase.from('accounts').delete().eq('user_id', userId);
+
+        if (error) throw error;
+
+        return res.json({
+            success: true,
+            message: 'ตัดการเชื่อมต่อบัญชี Telegram และล้างรายการกลุ่มเรียบร้อยแล้ว'
+        });
+    } catch (err) {
         return res.status(500).json({ success: false, error: err.message });
     }
 });
@@ -368,6 +394,24 @@ app.get('/api/status', authenticateUser, (req, res) => {
             nextDelay: queue.nextDelay || 0
         }
     });
+});
+
+// 8.5 ดึงประวัติการส่งย้อนหลัง (Execution Logs)
+app.get('/api/logs', authenticateUser, async (req, res) => {
+    const userId = req.user.id;
+    try {
+        const { data, error } = await supabase
+            .from('execution_logs')
+            .select('*')
+            .eq('user_id', userId)
+            .order('created_at', { ascending: false })
+            .limit(50);
+
+        if (error) throw error;
+        return res.json({ success: true, logs: data || [] });
+    } catch (err) {
+        return res.status(500).json({ success: false, error: err.message });
+    }
 });
 
 // 9. สั่ง RUN คิวการยิงโพสต์
