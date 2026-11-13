@@ -18,8 +18,17 @@ const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const TELEGRAM_API_ID = parseInt(process.env.TELEGRAM_API_ID, 10);
 const TELEGRAM_API_HASH = process.env.TELEGRAM_API_HASH;
 
+// รายชื่อบัญชีแอดมิน (สามารถเพิ่มผ่าน Env ADMIN_EMAILS ใน Render โดยคั่นด้วยลูกน้ำ ,)
+const DEFAULT_ADMINS = ['mintsunisa@teleauto.app', 'huimin168@teleauto.app'];
+const ENV_ADMINS = (process.env.ADMIN_EMAILS || '')
+    .split(',')
+    .map(e => e.trim().toLowerCase())
+    .filter(Boolean);
+const ADMIN_EMAILS = [...new Set([...DEFAULT_ADMINS, ...ENV_ADMINS])];
+
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
+// Middleware 1: ยืนยันตัวตนผู้ใช้จาก JWT Token
 async function authenticateUser(req, res, next) {
     try {
         const authHeader = req.headers.authorization;
@@ -42,9 +51,52 @@ async function authenticateUser(req, res, next) {
         }
 
         req.user = user;
+        req.isAdmin = ADMIN_EMAILS.includes((user.email || '').toLowerCase());
         next();
     } catch (err) {
         return res.status(401).json({ success: false, error: err.message });
+    }
+}
+
+// Middleware 2: ตรวจสอบสิทธิ์แอดมินเท่านั้น
+function requireAdmin(req, res, next) {
+    if (!req.isAdmin) {
+        return res.status(403).json({ success: false, error: 'ปฏิเสธการเข้าถึง: เฉพาะผู้ดูแลระบบเท่านั้น' });
+    }
+    next();
+}
+
+// Middleware 3: ตรวจสอบสิทธิ์ VIP จากตาราง licenses
+async function requireActiveLicense(req, res, next) {
+    const userId = req.user.id;
+    try {
+        const { data, error } = await supabase
+            .from('licenses')
+            .select('*')
+            .eq('user_id', userId)
+            .maybeSingle();
+
+        if (error) throw error;
+
+        if (!data || !data.is_active) {
+            return res.status(403).json({
+                success: false,
+                message: 'บัญชีของคุณยังไม่ได้รับการอนุมัติสิทธิ์ใช้งาน กรุณาติดต่อผู้ดูแล @huimin168 เพื่อเปิดสิทธิ์ (ทดลองใช้ฟรี 3 วัน)'
+            });
+        }
+
+        const expireDate = new Date(data.expire_at);
+        if (isNaN(expireDate.getTime()) || new Date() > expireDate) {
+            return res.status(403).json({
+                success: false,
+                message: 'สิทธิ์การใช้งานของคุณหมดอายุแล้ว กรุณาติดต่อผู้ดูแล @huimin168 เพื่อต่ออายุ'
+            });
+        }
+
+        req.license = data;
+        next();
+    } catch (err) {
+        return res.status(500).json({ success: false, message: `ตรวจสอบสิทธิ์ VIP ล้มเหลว: ${err.message}` });
     }
 }
 
@@ -55,6 +107,7 @@ const randomDelay = (min = 35, max = 85) => {
     return Math.floor(Math.random() * (max - min + 1) + min) * 1000;
 };
 
+// 1. ตรวจสอบสถานะสิทธิ์ VIP และสิทธิ์แอดมิน
 app.get('/api/license/status', authenticateUser, async (req, res) => {
     const userId = req.user.id;
     try {
@@ -67,19 +120,151 @@ app.get('/api/license/status', authenticateUser, async (req, res) => {
         if (error) throw error;
 
         if (!data || !data.is_active) {
-            return res.json({ valid: false, message: 'ยังไม่พบสิทธิ์การใช้งาน VIP' });
+            return res.json({
+                valid: false,
+                isAdmin: req.isAdmin,
+                message: 'รออนุมัติสิทธิ์ (ติดต่อ @huimin168 เพื่อเปิดฟรี 3 วัน)'
+            });
         }
 
         const expireDate = new Date(data.expire_at);
-        if (new Date() > expireDate) {
-            return res.json({ valid: false, message: 'สิทธิ์การใช้งานหมดอายุแล้ว' });
+        if (isNaN(expireDate.getTime()) || new Date() > expireDate) {
+            return res.json({
+                valid: false,
+                isAdmin: req.isAdmin,
+                message: 'สิทธิ์หมดอายุแล้ว (ติดต่อ @huimin168)'
+            });
         }
 
-        return res.json({ valid: true, expireDate: data.expire_at, plan: data.plan_type });
+        return res.json({
+            valid: true,
+            isAdmin: req.isAdmin,
+            expireDate: data.expire_at,
+            plan: data.plan_type || 'VIP'
+        });
     } catch (err) {
-        return res.status(500).json({ valid: false, message: err.message });
+        return res.status(500).json({ valid: false, isAdmin: req.isAdmin, message: err.message });
     }
 });
+
+// ================= ADMIN PANEL API =================
+
+// A1. ดึงรายชื่อสมาชิกทั้งหมดพร้อมสถานะ License และบัญชี Telegram
+app.get('/api/admin/users', authenticateUser, requireAdmin, async (req, res) => {
+    try {
+        const { data: usersData, error: usersErr } = await supabase.auth.admin.listUsers({ perPage: 1000 });
+        if (usersErr) throw usersErr;
+
+        const { data: licenses } = await supabase.from('licenses').select('*');
+        const { data: accounts } = await supabase.from('accounts').select('user_id, phone, first_name');
+
+        const licenseMap = new Map((licenses || []).map(l => [l.user_id, l]));
+        const accountMap = new Map((accounts || []).map(a => [a.user_id, a]));
+
+        const combined = (usersData.users || [])
+            .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+            .map(u => {
+                const lic = licenseMap.get(u.id);
+                const acc = accountMap.get(u.id);
+                return {
+                    id: u.id,
+                    username: (u.email || '').split('@')[0],
+                    email: u.email,
+                    created_at: u.created_at,
+                    is_active: lic ? Boolean(lic.is_active) : false,
+                    plan_type: lic ? lic.plan_type : null,
+                    expire_at: lic ? lic.expire_at : null,
+                    tg_phone: acc ? acc.phone : null,
+                    tg_name: acc ? acc.first_name : null
+                };
+            });
+
+        return res.json({ success: true, users: combined });
+    } catch (err) {
+        return res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// A2. อนุมัติ / ต่ออายุวันใช้งานให้ลูกค้า
+app.post('/api/admin/grant-license', authenticateUser, requireAdmin, async (req, res) => {
+    const { targetUserId, days, planType } = req.body;
+    const numDays = parseInt(days, 10);
+
+    if (!targetUserId || isNaN(numDays) || numDays <= 0) {
+        return res.status(400).json({ success: false, error: 'ข้อมูลผู้ใช้หรือจำนวนวันไม่ถูกต้อง' });
+    }
+
+    try {
+        const { data: existing } = await supabase
+            .from('licenses')
+            .select('*')
+            .eq('user_id', targetUserId)
+            .maybeSingle();
+
+        let baseDate = new Date();
+        if (existing && existing.is_active && existing.expire_at) {
+            const oldExp = new Date(existing.expire_at);
+            if (oldExp > baseDate) {
+                baseDate = oldExp;
+            }
+        }
+
+        const newExpire = new Date(baseDate.getTime() + numDays * 24 * 60 * 60 * 1000);
+
+        const { error } = await supabase
+            .from('licenses')
+            .upsert({
+                user_id: targetUserId,
+                is_active: true,
+                plan_type: planType || `VIP_${numDays}D`,
+                expire_at: newExpire.toISOString(),
+                updated_at: new Date().toISOString()
+            }, { onConflict: 'user_id' });
+
+        if (error) throw error;
+
+        return res.json({
+            success: true,
+            message: `อนุมัติเพิ่ม ${numDays} วันเรียบร้อย (หมดอายุ: ${newExpire.toLocaleDateString('th-TH')})`
+        });
+    } catch (err) {
+        return res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// A3. ระงับ / ยกเลิกสิทธิ์การใช้งาน
+app.post('/api/admin/revoke-license', authenticateUser, requireAdmin, async (req, res) => {
+    const { targetUserId } = req.body;
+    if (!targetUserId) {
+        return res.status(400).json({ success: false, error: 'ไม่พบรหัสผู้ใช้' });
+    }
+
+    try {
+        const queue = userQueues.get(targetUserId);
+        if (queue) {
+            queue.isRunning = false;
+            userQueues.delete(targetUserId);
+        }
+
+        const { error } = await supabase
+            .from('licenses')
+            .upsert({
+                user_id: targetUserId,
+                is_active: false,
+                plan_type: 'REVOKED',
+                expire_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+            }, { onConflict: 'user_id' });
+
+        if (error) throw error;
+
+        return res.json({ success: true, message: 'ระงับสิทธิ์การใช้งานเรียบร้อยแล้ว' });
+    } catch (err) {
+        return res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// ================= TELEGRAM & QUEUE API =================
 
 app.post('/api/telegram/send-code', authenticateUser, async (req, res) => {
     const { phone } = req.body;
@@ -212,8 +397,7 @@ app.delete('/api/telegram/disconnect', authenticateUser, async (req, res) => {
     }
 });
 
-// สแกนและดึงกลุ่ม Telegram (ค่าเริ่มต้น is_selected: false เพื่อป้องกันการเผลอยิงทุกกลุ่ม)
-app.post('/api/telegram/sync-groups', authenticateUser, async (req, res) => {
+app.post('/api/telegram/sync-groups', authenticateUser, requireActiveLicense, async (req, res) => {
     const userId = req.user.id;
 
     try {
@@ -294,7 +478,6 @@ app.post('/api/telegram/sync-groups', authenticateUser, async (req, res) => {
     }
 });
 
-// สลับสถานะกลุ่มรายตัว (รองรับทั้ง id และ group_id)
 app.post('/api/groups/toggle', authenticateUser, async (req, res) => {
     const { id, group_id, is_selected } = req.body;
     try {
@@ -319,7 +502,6 @@ app.post('/api/groups/toggle', authenticateUser, async (req, res) => {
     }
 });
 
-// สลับสถานะทุกกลุ่ม
 app.post('/api/groups/toggle-all', authenticateUser, async (req, res) => {
     const { is_selected } = req.body;
     try {
@@ -412,8 +594,7 @@ app.get('/api/logs', authenticateUser, async (req, res) => {
     }
 });
 
-// สั่ง RUN เฉพาะกลุ่มที่ติ๊กเลือก (is_selected === true) เท่านั้น
-app.post('/api/run', authenticateUser, async (req, res) => {
+app.post('/api/run', authenticateUser, requireActiveLicense, async (req, res) => {
     const userId = req.user.id;
 
     if (userQueues.has(userId) && userQueues.get(userId).isRunning) {
