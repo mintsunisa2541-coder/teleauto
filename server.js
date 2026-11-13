@@ -5,7 +5,6 @@ const dotenv = require('dotenv');
 const { createClient } = require('@supabase/supabase-js');
 const { TelegramClient, Api } = require('telegram');
 const { StringSession } = require('telegram/sessions');
-const bigInt = require('big-integer');
 
 dotenv.config();
 
@@ -102,10 +101,6 @@ const loginClients = new Map();
 
 const randomDelay = (min = 35, max = 85) => {
     return Math.floor(Math.random() * (max - min + 1) + min) * 1000;
-};
-
-const generateRandomId = () => {
-    return bigInt(Math.floor(Math.random() * 1e15)).multiply(1000).add(Math.floor(Math.random() * 1000));
 };
 
 app.get('/api/license/status', authenticateUser, async (req, res) => {
@@ -561,6 +556,7 @@ app.post('/api/queue/reset', authenticateUser, async (req, res) => {
     }
 });
 
+// พรีวิวโพสต์ล่าสุด (แสดงเบอร์โทรที่ดึงข้อมูลจริง + ข้ามข้อความระบบ)
 app.get('/api/telegram/saved-messages', authenticateUser, async (req, res) => {
     const userId = req.user.id;
     try {
@@ -581,24 +577,27 @@ app.get('/api/telegram/saved-messages', authenticateUser, async (req, res) => {
         );
 
         await client.connect();
-        const messages = await client.getMessages('me', { limit: 15 });
+        const me = await client.getMe();
+        const messages = await client.getMessages('me', { limit: 20 });
         await client.disconnect();
 
         const realPosts = (messages || []).filter(m => m && m.className === 'Message' && (m.message || m.media));
 
         if (realPosts.length === 0) {
-            return res.json({ success: false, message: 'ไม่พบโพสต์ข้อความหรือรูปภาพใน Saved Messages' });
+            return res.json({ success: false, message: `ไม่พบโพสต์ใน Saved Messages ของบัญชี ${me.firstName || ''} (+${me.phone || account.phone})` });
         }
 
         const latest = realPosts[0];
         const msgWithText = realPosts.find(m => m.message && m.message.trim().length > 0);
-        const displayText = (latest.message && latest.message.trim())
+        const bodyText = (latest.message && latest.message.trim())
             ? latest.message
             : (msgWithText ? msgWithText.message : '(โพสต์รูปภาพ/วิดีโอล้วน)');
 
+        const headerInfo = `📱 ดึงจากบัญชี: ${me.firstName || 'Telegram'} (+${me.phone || account.phone})\n----------------------------------------\n`;
+
         return res.json({
             success: true,
-            messages: [{ text: displayText, id: latest.id }]
+            messages: [{ text: headerInfo + bodyText, id: latest.id }]
         });
     } catch (err) {
         return res.status(500).json({ success: false, message: err.message });
@@ -647,7 +646,7 @@ app.get('/api/logs', authenticateUser, async (req, res) => {
     }
 });
 
-// 9. สั่ง RUN คิวการยิงโพสต์ (ส่งตาราง + กรอบอ้างอิง + อิโมจิพรีเมียม ครบถ้วนเหมือนต้นฉบับ ไม่ติดป้าย Forwarded from)
+// 9. สั่ง RUN คิวการยิงโพสต์ (ส่งตาราง + กรอบอ้างอิง + อิโมจิพรีเมียม ครบถ้วน ไม่ติดป้าย Forwarded from)
 app.post('/api/run', authenticateUser, requireActiveLicense, async (req, res) => {
     const userId = req.user.id;
     const { forceRestart } = req.body || {};
@@ -726,9 +725,8 @@ app.post('/api/run', authenticateUser, requireActiveLicense, async (req, res) =>
             );
 
             await client.connect();
-            const recentMsgs = await client.getMessages('me', { limit: 15 });
+            const recentMsgs = await client.getMessages('me', { limit: 20 });
 
-            // กรองเฉพาะข้อความจริงที่มีเนื้อหา (ไม่เอา MessageService เช่น ปักหมุด)
             const realPosts = (recentMsgs || []).filter(m => m && m.className === 'Message' && (m.message || m.media));
 
             if (realPosts.length === 0) {
@@ -738,7 +736,6 @@ app.post('/api/run', authenticateUser, requireActiveLicense, async (req, res) =>
                 return;
             }
 
-            // เลือกโพสต์ที่มีข้อความ/ตารางล่าสุดเป็นหลัก (เพื่อรักษา entities ตารางและอิโมจิพรีเมียม)
             let targetPost = realPosts[0];
             if ((!targetPost.message || targetPost.message.trim().length === 0) && realPosts.length > 1) {
                 const textPost = realPosts.find(m => m.message && m.message.trim().length > 0);
@@ -750,7 +747,6 @@ app.post('/api/run', authenticateUser, requireActiveLicense, async (req, res) =>
             const postText = targetPost.message || '';
             const postEntities = targetPost.entities || [];
 
-            // ตรวจสอบว่าโพสต์ล่าสุดมีรูปภาพหรือไฟล์วิดีโอจริงหรือไม่ (ไม่นับ WebPage Preview)
             let mediaBuffer = null;
             const mediaSource = realPosts[0];
             const isRealMedia = mediaSource.media &&
@@ -780,24 +776,18 @@ app.post('/api/run', authenticateUser, requireActiveLicense, async (req, res) =>
 
                 try {
                     if (mediaBuffer) {
-                        // กรณีมีรูปภาพ/วิดีโอ + ตาราง/อิโมจิพรีเมียม
                         await client.sendMessage(target.group_id, {
                             message: postText,
                             entities: postEntities,
                             file: mediaBuffer
                         });
                     } else {
-                        // กรณีโพสต์ตาราง + กรอบอ้างอิง + อิโมจิพรีเมียม ใช้ Api.messages.SendMessage ตรงเพื่อรักษาฟอร์แมต 100%
-                        const peer = await client.getInputEntity(target.group_id);
-                        await client.invoke(
-                            new Api.messages.SendMessage({
-                                peer: peer,
-                                message: postText,
-                                entities: postEntities,
-                                randomId: generateRandomId(),
-                                noWebpage: true
-                            })
-                        );
+                        // ส่งตาราง + กรอบอ้างอิง + อิโมจิพรีเมียม ครบถ้วนไม่ติดป้าย Forwarded from
+                        await client.sendMessage(target.group_id, {
+                            message: postText,
+                            entities: postEntities,
+                            linkPreview: false
+                        });
                     }
 
                     queueState.sent++;
@@ -828,20 +818,15 @@ app.post('/api/run', authenticateUser, requireActiveLicense, async (req, res) =>
                         break;
                     }
 
-                    // สำรอง: หากกลุ่มปลายทางปิดรับ Custom Emoji ให้ตัดเฉพาะ CustomEmoji ออกแต่ยังรักษากรอบตาราง (Blockquote) ไว้
+                    // สำรอง: หากกลุ่มปิดรับ Custom Emoji ให้ตัดเฉพาะ CustomEmoji ออกแต่ยังรักษากรอบตาราง (Blockquote) ไว้
                     try {
                         if (!postText) throw sendErr;
                         const safeEntities = postEntities.filter(e => e.className !== 'MessageEntityCustomEmoji');
-                        const peer = await client.getInputEntity(target.group_id);
-                        await client.invoke(
-                            new Api.messages.SendMessage({
-                                peer: peer,
-                                message: postText,
-                                entities: safeEntities,
-                                randomId: generateRandomId(),
-                                noWebpage: true
-                            })
-                        );
+                        await client.sendMessage(target.group_id, {
+                            message: postText,
+                            entities: safeEntities,
+                            linkPreview: false
+                        });
 
                         queueState.sent++;
                         await supabase
