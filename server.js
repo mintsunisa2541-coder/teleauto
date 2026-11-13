@@ -103,6 +103,49 @@ const randomDelay = (min = 35, max = 85) => {
     return Math.floor(Math.random() * (max - min + 1) + min) * 1000;
 };
 
+// ฟังก์ชันดึงโพสต์ล่าสุดจริงๆ จาก Saved Messages (รองรับทั้งแบบปกติและแบบแยกหัวข้อย่อย Topics)
+async function getLatestSavedPosts(client) {
+    let allMsgs = [];
+
+    try {
+        const regularMsgs = await client.getMessages('me', { limit: 20 });
+        if (regularMsgs && regularMsgs.length > 0) {
+            allMsgs.push(...regularMsgs);
+        }
+    } catch (e) {}
+
+    try {
+        const searchRes = await client.invoke(
+            new Api.messages.Search({
+                peer: new Api.InputPeerSelf(),
+                q: '',
+                filter: new Api.InputMessagesFilterEmpty(),
+                minDate: 0,
+                maxDate: 0,
+                offsetId: 0,
+                addOffset: 0,
+                limit: 20,
+                maxId: 0,
+                minId: 0,
+                hash: 0
+            })
+        );
+        if (searchRes && searchRes.messages && searchRes.messages.length > 0) {
+            allMsgs.push(...searchRes.messages);
+        }
+    } catch (e) {}
+
+    // ลบรายการซ้ำด้วย id และเรียงจากใหม่ไปเก่า (id มากสุดอยู่บนสุด)
+    const uniqueMap = new Map();
+    for (const m of allMsgs) {
+        if (m && m.className === 'Message' && (m.message || m.media)) {
+            uniqueMap.set(m.id, m);
+        }
+    }
+
+    return Array.from(uniqueMap.values()).sort((a, b) => b.id - a.id);
+}
+
 app.get('/api/license/status', authenticateUser, async (req, res) => {
     const userId = req.user.id;
     try {
@@ -556,7 +599,6 @@ app.post('/api/queue/reset', authenticateUser, async (req, res) => {
     }
 });
 
-// พรีวิวโพสต์ล่าสุด (แสดงเบอร์โทรที่ดึงข้อมูลจริง + ข้ามข้อความระบบ)
 app.get('/api/telegram/saved-messages', authenticateUser, async (req, res) => {
     const userId = req.user.id;
     try {
@@ -578,10 +620,8 @@ app.get('/api/telegram/saved-messages', authenticateUser, async (req, res) => {
 
         await client.connect();
         const me = await client.getMe();
-        const messages = await client.getMessages('me', { limit: 20 });
+        const realPosts = await getLatestSavedPosts(client);
         await client.disconnect();
-
-        const realPosts = (messages || []).filter(m => m && m.className === 'Message' && (m.message || m.media));
 
         if (realPosts.length === 0) {
             return res.json({ success: false, message: `ไม่พบโพสต์ใน Saved Messages ของบัญชี ${me.firstName || ''} (+${me.phone || account.phone})` });
@@ -646,7 +686,7 @@ app.get('/api/logs', authenticateUser, async (req, res) => {
     }
 });
 
-// 9. สั่ง RUN คิวการยิงโพสต์ (ส่งตาราง + กรอบอ้างอิง + อิโมจิพรีเมียม ครบถ้วน ไม่ติดป้าย Forwarded from)
+// 9. สั่ง RUN คิวการยิงโพสต์ (รองรับ Saved Messages Topics + ตาราง/อิโมจิพรีเมียมครบ + ส่งต่อคิวค้าง)
 app.post('/api/run', authenticateUser, requireActiveLicense, async (req, res) => {
     const userId = req.user.id;
     const { forceRestart } = req.body || {};
@@ -725,9 +765,7 @@ app.post('/api/run', authenticateUser, requireActiveLicense, async (req, res) =>
             );
 
             await client.connect();
-            const recentMsgs = await client.getMessages('me', { limit: 20 });
-
-            const realPosts = (recentMsgs || []).filter(m => m && m.className === 'Message' && (m.message || m.media));
+            const realPosts = await getLatestSavedPosts(client);
 
             if (realPosts.length === 0) {
                 queueState.isRunning = false;
@@ -782,7 +820,6 @@ app.post('/api/run', authenticateUser, requireActiveLicense, async (req, res) =>
                             file: mediaBuffer
                         });
                     } else {
-                        // ส่งตาราง + กรอบอ้างอิง + อิโมจิพรีเมียม ครบถ้วนไม่ติดป้าย Forwarded from
                         await client.sendMessage(target.group_id, {
                             message: postText,
                             entities: postEntities,
@@ -818,7 +855,6 @@ app.post('/api/run', authenticateUser, requireActiveLicense, async (req, res) =>
                         break;
                     }
 
-                    // สำรอง: หากกลุ่มปิดรับ Custom Emoji ให้ตัดเฉพาะ CustomEmoji ออกแต่ยังรักษากรอบตาราง (Blockquote) ไว้
                     try {
                         if (!postText) throw sendErr;
                         const safeEntities = postEntities.filter(e => e.className !== 'MessageEntityCustomEmoji');
