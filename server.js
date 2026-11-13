@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const crypto = require('crypto');
 const dotenv = require('dotenv');
 const { createClient } = require('@supabase/supabase-js');
 const { TelegramClient, Api } = require('telegram');
@@ -26,6 +27,11 @@ const ENV_ADMINS = (process.env.ADMIN_EMAILS || '')
 const ADMIN_EMAILS = [...new Set([...DEFAULT_ADMINS, ...ENV_ADMINS])];
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+// สร้าง randomId 64-bit แบบไม่ต้องพึ่งแพ็กเกจภายนอก (Render Deploy ผ่าน 100%)
+function generateRandomLong() {
+    return crypto.randomBytes(8).readBigInt64BE();
+}
 
 async function authenticateUser(req, res, next) {
     try {
@@ -103,11 +109,10 @@ const randomDelay = (min = 35, max = 85) => {
     return Math.floor(Math.random() * (max - min + 1) + min) * 1000;
 };
 
-// ฟังก์ชันดึงโพสต์ล่าสุดจริงๆ จาก Saved Messages เสมอ (รองรับทั้งโหมดรวมข้อความ และโหมดแยกหัวข้อย่อย Topics)
+// ดึงโพสต์ล่าสุดจริงๆ จาก Saved Messages เสมอ (รองรับทั้งโหมดรวมข้อความ และโหมดแยกหัวข้อย่อย Topics)
 async function getLatestSavedPosts(client) {
     let allMsgs = [];
 
-    // 1. ดึงจากห้อง Saved Messages หลัก (View as Messages / General)
     try {
         const regularMsgs = await client.getMessages('me', { limit: 25 });
         if (regularMsgs && regularMsgs.length > 0) {
@@ -115,7 +120,6 @@ async function getLatestSavedPosts(client) {
         }
     } catch (e) {}
 
-    // 2. ดึงจาก Saved Dialogs / Topics ย่อยทั้งหมด (กรณีเปิดโหมดแยกตามแชท หรือ Forward มาจากที่อื่น)
     try {
         const savedDialogs = await client.invoke(
             new Api.messages.GetSavedDialogs({
@@ -131,7 +135,6 @@ async function getLatestSavedPosts(client) {
         }
     } catch (e) {}
 
-    // 3. ค้นหาข้อความล่าสุดใน InputPeerSelf โดยตรง
     try {
         const searchRes = await client.invoke(
             new Api.messages.Search({
@@ -153,7 +156,6 @@ async function getLatestSavedPosts(client) {
         }
     } catch (e) {}
 
-    // กรองเฉพาะข้อความจริง (ไม่เอา MessageService เช่น ปักหมุด) และตัดรายการซ้ำด้วย id
     const uniqueMap = new Map();
     for (const m of allMsgs) {
         if (m && m.className === 'Message' && ((m.message && m.message.trim().length > 0) || m.media)) {
@@ -161,13 +163,33 @@ async function getLatestSavedPosts(client) {
         }
     }
 
-    // เรียงจากใหม่ล่าสุดไปเก่าสุด (เช็กทั้งเวลา date และรหัส id สูงสุด)
     return Array.from(uniqueMap.values()).sort((a, b) => {
         if ((b.date || 0) !== (a.date || 0)) {
             return (b.date || 0) - (a.date || 0);
         }
         return b.id - a.id;
     });
+}
+
+// ฟังก์ชันยิงโพสต์ตรงผ่าน Raw API เพื่อรักษาตาราง 100% + อิโมจิพรีเมียม + ไม่ติดป้าย Forwarded from
+async function sendRawFormattedPost(client, peer, text, entities, mediaBuffer) {
+    if (mediaBuffer) {
+        return await client.sendMessage(peer, {
+            message: text,
+            entities: entities,
+            file: mediaBuffer
+        });
+    }
+
+    return await client.invoke(
+        new Api.messages.SendMessage({
+            peer: peer,
+            message: text,
+            entities: entities,
+            randomId: generateRandomLong(),
+            noWebpage: true
+        })
+    );
 }
 
 app.get('/api/license/status', authenticateUser, async (req, res) => {
@@ -658,10 +680,10 @@ app.get('/api/telegram/saved-messages', authenticateUser, async (req, res) => {
             : (msgWithText ? msgWithText.message : '(โพสต์รูปภาพ/วิดีโอล้วน)');
 
         const sentTime = latest.date
-            ? new Date(latest.date * 1000).toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' })
+            ? new Date(latest.date * 1000).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok', dateStyle: 'short', timeStyle: 'short' })
             : '';
 
-        const headerInfo = `📱 ดึงจากบัญชี: ${me.firstName || 'Telegram'} (+${me.phone || account.phone})${sentTime ? ` | 🕒 โพสต์ล่าสุดเวลา: ${sentTime}` : ''}\n----------------------------------------\n`;
+        const headerInfo = `📱 ดึงจากบัญชี: ${me.firstName || 'Telegram'} (+${me.phone || account.phone})${sentTime ? ` | 🕒 เวลาไทย: ${sentTime}` : ''}\n----------------------------------------\n`;
 
         return res.json({
             success: true,
@@ -714,7 +736,7 @@ app.get('/api/logs', authenticateUser, async (req, res) => {
     }
 });
 
-// 9. สั่ง RUN คิวการยิงโพสต์ (ดึงโพสต์ล่าสุดเสมอ + รักษาตาราง/อิโมจิพรีเมียมครบ + ส่งต่อคิวค้าง)
+// 9. สั่ง RUN คิวการยิงโพสต์ (ใช้ Api.messages.SendMessage ส่งตาราง + อิโมจิพรีเมียมครบ 100%)
 app.post('/api/run', authenticateUser, requireActiveLicense, async (req, res) => {
     const userId = req.user.id;
     const { forceRestart } = req.body || {};
@@ -841,19 +863,8 @@ app.post('/api/run', authenticateUser, requireActiveLicense, async (req, res) =>
                 queueState.currentGroup = target.group_name;
 
                 try {
-                    if (mediaBuffer) {
-                        await client.sendMessage(target.group_id, {
-                            message: postText,
-                            entities: postEntities,
-                            file: mediaBuffer
-                        });
-                    } else {
-                        await client.sendMessage(target.group_id, {
-                            message: postText,
-                            entities: postEntities,
-                            linkPreview: false
-                        });
-                    }
+                    const peer = await client.getInputEntity(target.group_id);
+                    await sendRawFormattedPost(client, peer, postText, postEntities, mediaBuffer);
 
                     queueState.sent++;
                     await supabase
@@ -883,14 +894,12 @@ app.post('/api/run', authenticateUser, requireActiveLicense, async (req, res) =>
                         break;
                     }
 
+                    // สำรอง: หากกลุ่มปิดรับ Custom Emoji ให้ตัดเฉพาะ CustomEmoji ออกแต่ยังรักษากรอบตารางไว้ทั้งหมด
                     try {
                         if (!postText) throw sendErr;
+                        const peer = await client.getInputEntity(target.group_id);
                         const safeEntities = postEntities.filter(e => e.className !== 'MessageEntityCustomEmoji');
-                        await client.sendMessage(target.group_id, {
-                            message: postText,
-                            entities: safeEntities,
-                            linkPreview: false
-                        });
+                        await sendRawFormattedPost(client, peer, postText, safeEntities, mediaBuffer);
 
                         queueState.sent++;
                         await supabase
