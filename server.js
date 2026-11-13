@@ -594,6 +594,7 @@ app.get('/api/logs', authenticateUser, async (req, res) => {
     }
 });
 
+// 9. สั่ง RUN คิวการยิงโพสต์ (ส่งแบบโพสต์ใหม่ ไม่ติดป้าย Forwarded from และรักษาฟอร์แมตตาราง/อิโมจิพรีเมียมครบถ้วน)
 app.post('/api/run', authenticateUser, requireActiveLicense, async (req, res) => {
     const userId = req.user.id;
 
@@ -645,33 +646,56 @@ app.post('/api/run', authenticateUser, requireActiveLicense, async (req, res) =>
             await client.connect();
             const sourceMsg = await client.getMessages('me', { limit: 1 });
 
+            if (!sourceMsg || sourceMsg.length === 0) {
+                queueState.isRunning = false;
+                queueState.currentGroup = '- ไม่พบโพสต์ใน Saved Messages -';
+                await client.disconnect();
+                return;
+            }
+
+            const originalPost = sourceMsg[0];
+
             while (queueState.isRunning && queueState.targets.length > 0) {
                 const target = queueState.targets.shift();
                 queueState.currentGroup = target.group_name;
 
                 try {
-                    if (sourceMsg && sourceMsg.length > 0) {
-                        await client.forwardMessages(target.group_id, {
-                            messages: [sourceMsg[0].id],
-                            fromPeer: 'me'
-                        });
-                    }
+                    // ส่งออบเจ็กต์ข้อความต้นฉบับเป็นโพสต์ใหม่ (ไม่ติดป้าย Forwarded from + รักษาตาราง/อิโมจิพรีเมียม/สื่อครบถ้วน)
+                    await client.sendMessage(target.group_id, {
+                        message: originalPost
+                    });
 
                     queueState.sent++;
                     await supabase.from('execution_logs').insert({
                         user_id: userId,
                         group_name: target.group_name,
                         status: 'success',
-                        message: `ยิงสำเร็จเข้ากลุ่ม: ${target.group_name}`
+                        message: `ยิงสำเร็จ (โพสต์ใหม่) เข้ากลุ่ม: ${target.group_name}`
                     });
                 } catch (sendErr) {
-                    queueState.failed++;
-                    await supabase.from('execution_logs').insert({
-                        user_id: userId,
-                        group_name: target.group_name,
-                        status: 'error',
-                        message: `ส่งไม่สำเร็จ: ${sendErr.message}`
-                    });
+                    // กรณีกลุ่มปลายทางบล็อก Custom Emoji หรือฟอร์แมตบางอย่าง ให้ลองส่งข้อความ+สื่อสำรองอัตโนมัติ
+                    try {
+                        await client.sendMessage(target.group_id, {
+                            message: originalPost.message || '',
+                            file: originalPost.media || undefined
+                        });
+
+                        queueState.sent++;
+                        await supabase.from('execution_logs').insert({
+                            user_id: userId,
+                            group_name: target.group_name,
+                            status: 'success',
+                            message: `ยิงสำเร็จเข้ากลุ่ม: ${target.group_name}`
+                        });
+                    } catch (fallbackErr) {
+                        queueState.failed++;
+                        await supabase.from('execution_logs').insert({
+                            user_id: userId,
+                            group_name: target.group_name,
+                            status: 'error',
+                            message: `ส่งไม่สำเร็จ: ${fallbackErr.message}`
+                        });
+                    }
                 }
 
                 if (queueState.targets.length > 0 && queueState.isRunning) {
