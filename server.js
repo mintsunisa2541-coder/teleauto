@@ -980,19 +980,26 @@ app.post('/api/run', authenticateUser, requireActiveLicense, async (req, res) =>
 
                     const currentLoopHours = userLoopConfigs.get(userId) ?? queueState.loopHours ?? 0;
 
-                    if (queueState.isRunning && currentLoopHours > 0) {
+                   if (queueState.isRunning && currentLoopHours > 0) {
                         queueState.isWaitingNextLoop = true;
-                        const waitSeconds = currentLoopHours * 3600;
+                        
+                        // เพิ่มความสุ่ม ±20 นาที (1,200 วินาที) เพื่อให้รอบเวลาไม่ซ้ำกันเป๊ะเหมือนบอท
+                        const baseSeconds = currentLoopHours * 3600;
+                        const jitterRange = Math.min(1200, Math.floor(baseSeconds * 0.2)); // สุ่มบวกลบสูงสุด 20% หรือ 20 นาที
+                        const randomJitter = Math.floor(Math.random() * (jitterRange * 2 + 1)) - jitterRange;
+                        const waitSeconds = Math.max(600, baseSeconds + randomJitter); // พักขั้นต่ำอย่างน้อย 10 นาที
+
+                        const waitMins = Math.round(waitSeconds / 60);
                         queueState.nextDelay = waitSeconds;
-                        queueState.currentGroup = `🔁 เสร็จสิ้นรอบที่ ${queueState.cycleCount} • รอเริ่มรอบที่ ${queueState.cycleCount + 1} อัตโนมัติ`;
+                        queueState.currentGroup = `🔁 เสร็จสิ้นรอบที่ ${queueState.cycleCount} • พักแบบสุ่ม ~${waitMins} นาที ก่อนเริ่มรอบที่ ${queueState.cycleCount + 1}`;
 
                         await supabase.from('execution_logs').insert({
                             user_id: userId,
-                            group_name: 'AUTO-LOOP 24 ชม.',
+                            group_name: 'AUTO-LOOP (SMART JITTER)',
                             status: 'success',
-                            message: `ครบกำหนดรอบที่ ${queueState.cycleCount} ระบบจะพัก ${currentLoopHours} ชั่วโมงแล้วเริ่มวนส่งรอบถัดไปอัตโนมัติ`
+                            message: `ครบกำหนดรอบที่ ${queueState.cycleCount} ระบบสุ่มพัก ${waitMins} นาที (โหมดเนียนเหมือนคนโพสต์) แล้วจะเริ่มรอบถัดไปอัตโนมัติ`
                         });
-
+                       
                         for (let w = waitSeconds; w > 0; w--) {
                             if (!queueState.isRunning) break;
                             const updatedLoop = userLoopConfigs.get(userId) ?? currentLoopHours;
