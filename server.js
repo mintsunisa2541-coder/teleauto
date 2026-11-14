@@ -42,9 +42,9 @@ async function authenticateUser(req, res, next) {
         const { data: { user }, error } = await supabase.auth.getUser(token);
 
         if (error || !user) {
-            return res.status(401).json({ 
-                success: false, 
-                error: `ตรวจสอบสิทธิ์ไม่ผ่าน: ${error ? error.message : 'ไม่พบข้อมูลผู้ใช้'}` 
+            return res.status(401).json({
+                success: false,
+                error: `ตรวจสอบสิทธิ์ไม่ผ่าน: ${error ? error.message : 'ไม่พบข้อมูลผู้ใช้'}`
             });
         }
 
@@ -61,6 +61,19 @@ function requireAdmin(req, res, next) {
         return res.status(403).json({ success: false, error: 'ปฏิเสธการเข้าถึง: เฉพาะผู้ดูแลระบบเท่านั้น' });
     }
     next();
+}
+
+async function checkUserLicenseValid(userId) {
+    const { data, error } = await supabase
+        .from('licenses')
+        .select('*')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+    if (error || !data || !data.is_active) return { valid: false, license: null };
+    const expireDate = new Date(data.expire_at);
+    if (isNaN(expireDate.getTime()) || new Date() > expireDate) return { valid: false, license: data };
+    return { valid: true, license: data };
 }
 
 async function requireActiveLicense(req, res, next) {
@@ -97,26 +110,13 @@ async function requireActiveLicense(req, res, next) {
 }
 
 const userQueues = new Map();
+const userLoopConfigs = new Map();
 const loginClients = new Map();
 
 const randomDelay = (min = 35, max = 85) => {
     return Math.floor(Math.random() * (max - min + 1) + min) * 1000;
 };
 
-// เช็กสิทธิ์ VIP ระหว่างรัน Auto-Loop
-async function checkLicenseStillValid(userId) {
-    const { data, error } = await supabase
-        .from('licenses')
-        .select('*')
-        .eq('user_id', userId)
-        .maybeSingle();
-
-    if (error || !data || !data.is_active) return false;
-    const exp = new Date(data.expire_at);
-    return !isNaN(exp.getTime()) && new Date() <= exp;
-}
-
-// ดึงโพสต์ล่าสุดจริงๆ จาก Saved Messages เสมอ
 async function getLatestSavedPosts(client) {
     let allMsgs = [];
 
@@ -217,6 +217,27 @@ app.get('/api/license/status', authenticateUser, async (req, res) => {
     }
 });
 
+// ================= AUTO-LOOP CONFIG API =================
+
+app.post('/api/loop/config', authenticateUser, (req, res) => {
+    const userId = req.user.id;
+    const loopHours = Math.max(0, parseInt(req.body.loopHours, 10) || 0);
+    userLoopConfigs.set(userId, loopHours);
+
+    const queue = userQueues.get(userId);
+    if (queue) {
+        queue.loopHours = loopHours;
+    }
+
+    return res.json({
+        success: true,
+        loopHours,
+        message: loopHours > 0
+            ? `ตั้งค่าวนยิงซ้ำอัตโนมัติทุก ${loopHours} ชั่วโมงเรียบร้อย`
+            : 'ปิดโหมดวนลูปแล้ว (ยิงรอบเดียว)'
+    });
+});
+
 // ================= ADMIN PANEL API =================
 
 app.get('/api/admin/users', authenticateUser, requireAdmin, async (req, res) => {
@@ -310,6 +331,7 @@ app.post('/api/admin/revoke-license', authenticateUser, requireAdmin, async (req
         const queue = userQueues.get(targetUserId);
         if (queue) {
             queue.isRunning = false;
+            queue.loopHours = 0;
             userQueues.delete(targetUserId);
         }
 
@@ -377,10 +399,10 @@ app.post('/api/telegram/send-code', authenticateUser, async (req, res) => {
 
         loginClients.set(userId, { client, phone, phoneCodeHash });
 
-        return res.json({ 
-            success: true, 
+        return res.json({
+            success: true,
             message: 'ส่งรหัส OTP เรียบร้อยแล้ว (ตรวจดูในแอป Telegram)',
-            isCodeViaApp 
+            isCodeViaApp
         });
     } catch (err) {
         console.error('Send Code Error:', err);
@@ -411,10 +433,10 @@ app.post('/api/telegram/verify-code', authenticateUser, async (req, res) => {
         } catch (signInErr) {
             if (signInErr.errorMessage === 'SESSION_PASSWORD_NEEDED') {
                 if (!password) {
-                    return res.status(400).json({ 
-                        success: false, 
-                        needsPassword: true, 
-                        error: 'บัญชีนี้เปิดใช้งาน 2FA กรุณากรอกรหัสผ่าน 2-Step' 
+                    return res.status(400).json({
+                        success: false,
+                        needsPassword: true,
+                        error: 'บัญชีนี้เปิดใช้งาน 2FA กรุณากรอกรหัสผ่าน 2-Step'
                     });
                 }
                 await client.signInWithPassword(
@@ -466,6 +488,7 @@ app.delete('/api/telegram/disconnect', authenticateUser, async (req, res) => {
         const queue = userQueues.get(userId);
         if (queue) {
             queue.isRunning = false;
+            queue.loopHours = 0;
             userQueues.delete(userId);
         }
 
@@ -701,6 +724,7 @@ app.get('/api/telegram/saved-messages', authenticateUser, async (req, res) => {
 app.get('/api/status', authenticateUser, (req, res) => {
     const userId = req.user.id;
     const queue = userQueues.get(userId);
+    const savedLoopHours = userLoopConfigs.get(userId) || 0;
 
     if (!queue) {
         return res.json({
@@ -713,10 +737,9 @@ app.get('/api/status', authenticateUser, (req, res) => {
                 currentGroup: '-',
                 nextDelay: 0,
                 isPaused: false,
-                loopHours: 0,
-                loopRound: 1,
-                loopWaitSeconds: 0,
-                isRunning: false
+                loopHours: savedLoopHours,
+                isWaitingNextLoop: false,
+                cycleCount: 1
             }
         });
     }
@@ -731,10 +754,9 @@ app.get('/api/status', authenticateUser, (req, res) => {
             currentGroup: queue.currentGroup || '-',
             nextDelay: queue.nextDelay || 0,
             isPaused: !queue.isRunning && queue.targets.length > 0,
-            loopHours: queue.loopHours || 0,
-            loopRound: queue.loopRound || 1,
-            loopWaitSeconds: queue.loopWaitSeconds || 0,
-            isRunning: Boolean(queue.isRunning)
+            loopHours: queue.loopHours ?? savedLoopHours,
+            isWaitingNextLoop: Boolean(queue.isWaitingNextLoop),
+            cycleCount: queue.cycleCount || 1
         }
     });
 });
@@ -756,21 +778,20 @@ app.get('/api/logs', authenticateUser, async (req, res) => {
     }
 });
 
-// 9. สั่ง RUN คิวการยิงโพสต์ (รองรับ Auto-Loop 24 ชม. + Forward ตาราง/อิโมจิพรีเมียมครบ 100%)
+// 9. สั่ง RUN คิวการยิงโพสต์พร้อมระบบ Auto-Loop 24 ชม.
 app.post('/api/run', authenticateUser, requireActiveLicense, async (req, res) => {
     const userId = req.user.id;
-    const { forceRestart, loopHours } = req.body || {};
-    const parsedLoopHours = Math.max(0, parseFloat(loopHours) || 0);
+    const { forceRestart, loopHours: reqLoopHours } = req.body || {};
+
+    if (typeof reqLoopHours !== 'undefined') {
+        userLoopConfigs.set(userId, Math.max(0, parseInt(reqLoopHours, 10) || 0));
+    }
+    const activeLoopHours = userLoopConfigs.get(userId) || 0;
 
     const existingQueue = userQueues.get(userId);
     if (existingQueue && existingQueue.isRunning) {
-        existingQueue.loopHours = parsedLoopHours;
-        return res.json({
-            success: true,
-            message: parsedLoopHours > 0
-                ? `ระบบกำลังทำงานอยู่ (อัปเดตโหมดวนลูปอัตโนมัติทุก ${parsedLoopHours} ชม. เรียบร้อย)`
-                : 'ระบบกำลังทำงานอยู่ในขณะนี้'
-        });
+        existingQueue.loopHours = activeLoopHours;
+        return res.json({ success: true, message: 'ระบบกำลังทำงานอยู่ในขณะนี้' });
     }
 
     try {
@@ -789,8 +810,8 @@ app.post('/api/run', authenticateUser, requireActiveLicense, async (req, res) =>
         if (!forceRestart && existingQueue && existingQueue.targets && existingQueue.targets.length > 0) {
             queueState = existingQueue;
             queueState.isRunning = true;
-            queueState.loopHours = parsedLoopHours;
-            queueState.loopWaitSeconds = 0;
+            queueState.isWaitingNextLoop = false;
+            queueState.loopHours = activeLoopHours;
             isResuming = true;
         } else {
             const { data: allSelectedGroups, error: groupErr } = await supabase
@@ -831,49 +852,38 @@ app.post('/api/run', authenticateUser, requireActiveLicense, async (req, res) =>
                 failed: 0,
                 currentGroup: '-',
                 nextDelay: 0,
-                loopHours: parsedLoopHours,
-                loopRound: 1,
-                loopWaitSeconds: 0
+                loopHours: activeLoopHours,
+                isWaitingNextLoop: false,
+                cycleCount: 1
             };
             userQueues.set(userId, queueState);
         }
 
         (async () => {
             while (queueState.isRunning) {
-                // ตรวจสอบสิทธิ์ VIP ทุกรอบก่อนเริ่มยิง
-                const validLic = await checkLicenseStillValid(userId);
-                if (!validLic) {
+                const licCheck = await checkUserLicenseValid(userId);
+                if (!licCheck.valid) {
                     queueState.isRunning = false;
-                    queueState.currentGroup = '- หยุดทำงานอัตโนมัติ เนื่องจากสิทธิ์ VIP หมดอายุ -';
+                    queueState.currentGroup = '- หยุดทำงานอัตโนมัติเนื่องจากสิทธิ์ VIP หมดอายุ -';
                     queueState.nextDelay = 0;
-                    queueState.loopWaitSeconds = 0;
                     break;
                 }
 
-                // ถ้าขึ้นรอบใหม่ของ Auto-Loop ให้ดึงรายชื่อกลุ่มที่เลือกไว้ล่าสุดมาเติมคิวใหม่
-                if (queueState.targets.length === 0 && queueState.loopHours > 0) {
-                    const { data: freshGroups } = await supabase
-                        .from('groups')
-                        .select('*')
-                        .eq('user_id', userId)
-                        .eq('is_selected', true)
-                        .order('group_name', { ascending: true });
+                const { data: freshAcc } = await supabase
+                    .from('accounts')
+                    .select('*')
+                    .eq('user_id', userId)
+                    .eq('is_active', true)
+                    .maybeSingle();
 
-                    if (!freshGroups || freshGroups.length === 0) {
-                        queueState.isRunning = false;
-                        queueState.currentGroup = '- หยุดทำงานเนื่องจากไม่มีกลุ่มที่เลือกไว้ -';
-                        break;
-                    }
-
-                    queueState.loopRound = (queueState.loopRound || 1) + 1;
-                    queueState.targets = [...freshGroups];
-                    queueState.total = freshGroups.length;
-                    queueState.sent = 0;
-                    queueState.failed = 0;
+                if (!freshAcc) {
+                    queueState.isRunning = false;
+                    queueState.currentGroup = '- ไม่พบบัญชี Telegram ที่เชื่อมต่อ -';
+                    break;
                 }
 
                 const client = new TelegramClient(
-                    new StringSession(account.session_string),
+                    new StringSession(freshAcc.session_string),
                     TELEGRAM_API_ID,
                     TELEGRAM_API_HASH,
                     { connectionRetries: 5 }
@@ -894,7 +904,7 @@ app.post('/api/run', authenticateUser, requireActiveLicense, async (req, res) =>
 
                     while (queueState.isRunning && queueState.targets.length > 0) {
                         const target = queueState.targets.shift();
-                        queueState.currentGroup = `[รอบที่ ${queueState.loopRound}] ${target.group_name}`;
+                        queueState.currentGroup = `[รอบที่ ${queueState.cycleCount}] ${target.group_name}`;
 
                         try {
                             await client.forwardMessages(target.group_id, {
@@ -913,7 +923,7 @@ app.post('/api/run', authenticateUser, requireActiveLicense, async (req, res) =>
                                 user_id: userId,
                                 group_name: target.group_name,
                                 status: 'success',
-                                message: `[รอบที่ ${queueState.loopRound}] ฟอร์เวิร์ดสำเร็จเข้ากลุ่ม: ${target.group_name}`
+                                message: `[รอบ ${queueState.cycleCount}] ฟอร์เวิร์ดสำเร็จเข้ากลุ่ม: ${target.group_name}`
                             });
                         } catch (sendErr) {
                             const errMsg = sendErr.message || '';
@@ -941,7 +951,7 @@ app.post('/api/run', authenticateUser, requireActiveLicense, async (req, res) =>
                                 user_id: userId,
                                 group_name: target.group_name,
                                 status: 'error',
-                                message: `[รอบที่ ${queueState.loopRound}] ส่งไม่สำเร็จ: ${errMsg}`
+                                message: `[รอบ ${queueState.cycleCount}] ส่งไม่สำเร็จ: ${errMsg}`
                             });
                         }
 
@@ -960,7 +970,7 @@ app.post('/api/run', authenticateUser, requireActiveLicense, async (req, res) =>
                     await client.disconnect().catch(() => {});
                 }
 
-                // เช็กว่าจบคิวของรอบนี้แล้วหรือยัง
+                // ตรวจสอบเมื่อส่งครบทุกกลุ่มในรอบปัจจุบัน
                 if (queueState.targets.length === 0) {
                     await supabase
                         .from('groups')
@@ -968,43 +978,80 @@ app.post('/api/run', authenticateUser, requireActiveLicense, async (req, res) =>
                         .eq('user_id', userId)
                         .eq('is_selected', true);
 
-                    // ถ้าเปิดโหมดวนลูป Auto-Loop 24 ชม. ให้รอตามจำนวนชั่วโมงที่ตั้งไว้แล้ววนรอบใหม่
-                    if (queueState.isRunning && queueState.loopHours > 0) {
-                        const waitSec = Math.round(queueState.loopHours * 3600);
-                        queueState.nextDelay = 0;
-                        queueState.loopWaitSeconds = waitSec;
-                        queueState.currentGroup = `⏳ จบรอบที่ ${queueState.loopRound} แล้ว — รอวนลูปรอบถัดไปอัตโนมัติ (ทุก ${queueState.loopHours} ชม.)`;
+                    const currentLoopHours = userLoopConfigs.get(userId) ?? queueState.loopHours ?? 0;
 
-                        for (let w = waitSec; w > 0; w--) {
-                            if (!queueState.isRunning || queueState.loopHours <= 0) break;
-                            queueState.loopWaitSeconds = w;
+                    if (queueState.isRunning && currentLoopHours > 0) {
+                        queueState.isWaitingNextLoop = true;
+                        const waitSeconds = currentLoopHours * 3600;
+                        queueState.nextDelay = waitSeconds;
+                        queueState.currentGroup = `🔁 เสร็จสิ้นรอบที่ ${queueState.cycleCount} • รอเริ่มรอบที่ ${queueState.cycleCount + 1} อัตโนมัติ`;
+
+                        await supabase.from('execution_logs').insert({
+                            user_id: userId,
+                            group_name: 'AUTO-LOOP 24 ชม.',
+                            status: 'success',
+                            message: `ครบกำหนดรอบที่ ${queueState.cycleCount} ระบบจะพัก ${currentLoopHours} ชั่วโมงแล้วเริ่มวนส่งรอบถัดไปอัตโนมัติ`
+                        });
+
+                        for (let w = waitSeconds; w > 0; w--) {
+                            if (!queueState.isRunning) break;
+                            const updatedLoop = userLoopConfigs.get(userId) ?? currentLoopHours;
+                            if (updatedLoop <= 0) {
+                                queueState.isRunning = false;
+                                break;
+                            }
+                            queueState.nextDelay = w;
                             await new Promise(r => setTimeout(r, 1000));
                         }
-                        queueState.loopWaitSeconds = 0;
 
-                        if (queueState.isRunning && queueState.loopHours > 0) {
-                            continue; // เริ่มวนลูปรอบถัดไปทันที
+                        queueState.isWaitingNextLoop = false;
+
+                        if (!queueState.isRunning) {
+                            queueState.currentGroup = '- หยุดระบบ Auto-Loop เรียบร้อย -';
+                            queueState.nextDelay = 0;
+                            userQueues.delete(userId);
+                            break;
                         }
-                    }
 
-                    // จบการทำงานกรณีโหมดยิงรอบเดียว หรือถูกกดหยุดระหว่างรอวนลูป
-                    queueState.isRunning = false;
-                    queueState.currentGroup = '- เสร็จสิ้นรอบการส่งทั้งหมด -';
-                    queueState.nextDelay = 0;
-                    queueState.loopWaitSeconds = 0;
-                    userQueues.delete(userId);
-                    break;
+                        // เตรียมรายการกลุ่มสำหรับรอบถัดไป
+                        const { data: nextGroups } = await supabase
+                            .from('groups')
+                            .select('*')
+                            .eq('user_id', userId)
+                            .eq('is_selected', true)
+                            .order('group_name', { ascending: true });
+
+                        if (!nextGroups || nextGroups.length === 0) {
+                            queueState.isRunning = false;
+                            queueState.currentGroup = '- ไม่พบกลุ่มที่เลือกไว้สำหรับรอบถัดไป -';
+                            queueState.nextDelay = 0;
+                            userQueues.delete(userId);
+                            break;
+                        }
+
+                        queueState.cycleCount++;
+                        queueState.targets = [...nextGroups];
+                        queueState.total = nextGroups.length;
+                        queueState.sent = 0;
+                        queueState.failed = 0;
+                        queueState.nextDelay = 0;
+                    } else {
+                        queueState.isRunning = false;
+                        queueState.currentGroup = '- เสร็จสิ้นรอบการส่งทั้งหมด -';
+                        queueState.nextDelay = 0;
+                        userQueues.delete(userId);
+                        break;
+                    }
                 } else {
                     queueState.isRunning = false;
                     queueState.currentGroup = `- หยุดชั่วคราว (ค้างส่งอีก ${queueState.targets.length} กลุ่ม) -`;
                     queueState.nextDelay = 0;
-                    queueState.loopWaitSeconds = 0;
                     break;
                 }
             }
         })().catch(console.error);
 
-        const loopNote = parsedLoopHours > 0 ? ` [โหมดวนลูปอัตโนมัติทุก ${parsedLoopHours} ชม.]` : ' [โหมดยิงรอบเดียว]';
+        const loopNote = activeLoopHours > 0 ? ` (เปิดโหมด Auto-Loop วนซ้ำทุก ${activeLoopHours} ชม.)` : '';
         const msgText = isResuming
             ? `ดำเนินการส่งต่อจากงานที่ค้างไว้ (เหลืออีก ${queueState.targets.length} จาก ${queueState.total} กลุ่ม)${loopNote}`
             : `เริ่มต้นคิวการฟอร์เวิร์ดโพสต์เฉพาะ ${queueState.targets.length} กลุ่มที่เลือกเรียบร้อย${loopNote}`;
@@ -1021,10 +1068,10 @@ app.post('/api/stop', authenticateUser, (req, res) => {
 
     if (queue) {
         queue.isRunning = false;
-        queue.loopWaitSeconds = 0;
+        queue.isWaitingNextLoop = false;
         queue.currentGroup = queue.targets.length > 0
             ? `- หยุดชั่วคราว (ค้างส่งอีก ${queue.targets.length} กลุ่ม) -`
-            : '- หยุดระบบวนลูปอัตโนมัติเรียบร้อย -';
+            : '- หยุดระบบ Auto-Loop เรียบร้อย -';
         queue.nextDelay = 0;
     }
 
@@ -1032,7 +1079,7 @@ app.post('/api/stop', authenticateUser, (req, res) => {
         success: true,
         message: queue && queue.targets.length > 0
             ? `หยุดการทำงานชั่วคราว (ค้างอีก ${queue.targets.length} กลุ่ม กด RUN เพื่อส่งต่อได้ทันที)`
-            : 'สั่งหยุดการทำงานและปิดระบบวนลูปเรียบร้อย'
+            : 'สั่งหยุดการทำงานและยกเลิกรอบ Auto-Loop เรียบร้อย'
     });
 });
 
