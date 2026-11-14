@@ -34,100 +34,92 @@
             position: relative;
         }
 
-        /* ---------------- Watermark Pattern Layer (ลายน้ำพื้นหลังทั่วหน้าเว็บ) ---------------- */
+        /* ---------------- Global Watermark ---------------- */
         .global-watermark {
             position: fixed;
             inset: 0;
             pointer-events: none;
-            z-index: 5;
-            opacity: 0.032;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='150' viewBox='0 0 260 150'%3E%3Cg transform='rotate(-22 130 75)'%3E%3Ctext x='15' y='65' fill='%239333ea' font-family='sans-serif' font-weight='900' font-size='20' letter-spacing='2'%3ETELEAUTO PRO%3C/text%3E%3Ctext x='45' y='92' fill='%23ec4899' font-family='sans-serif' font-weight='700' font-size='11' letter-spacing='1.5'%3ECLOUD AUTO BOT%3C/text%3E%3C/g%3E%3C/svg%3E");
+            z-index: 1;
+            opacity: 0.45;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='220' viewBox='0 0 320 220'%3E%3Ctext x='50%25' y='50%25' fill='%239333ea' fill-opacity='0.06' font-family='sans-serif' font-weight='800' font-size='16' letter-spacing='2' text-anchor='middle' transform='rotate(-22 160 110)'%3ETELEAUTO PRO • CLOUD AUTO BOT%3C/text%3E%3C/svg%3E");
             background-repeat: repeat;
         }
 
-        /* ---------------- Button Click Ripple & Tactile Glow Effects (เอฟเฟกต์เวลากดปุ่ม) ---------------- */
+        /* ---------------- Button Click & Ripple Effects ---------------- */
         button, .banner-cta-btn, .price-btn, .owner-contact-link, .btn-contact-admin-urgent {
             position: relative;
             overflow: hidden;
             transition: transform 0.16s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease, filter 0.2s ease;
         }
 
-        button:hover:not(:disabled),
-        .banner-cta-btn:hover,
-        .price-btn:hover,
-        .owner-contact-link:hover,
-        .btn-contact-admin-urgent:hover {
-            filter: brightness(1.05);
-            transform: translateY(-1.5px);
+        button:hover:not(:disabled), .banner-cta-btn:hover, .price-btn:hover, .owner-contact-link:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.04);
         }
 
-        button:active:not(:disabled),
-        .banner-cta-btn:active,
-        .price-btn:active,
-        .owner-contact-link:active,
-        .btn-contact-admin-urgent:active {
+        button:active:not(:disabled), .banner-cta-btn:active, .price-btn:active, .owner-contact-link:active {
             transform: scale(0.95) !important;
+        }
+
+        .btn-run::after, .btn-submit::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -120%;
+            width: 60%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent);
+            transform: skewX(-25deg);
+            animation: btnShimmer 3.5s infinite;
+            pointer-events: none;
+        }
+
+        @keyframes btnShimmer {
+            0% { left: -120%; }
+            35% { left: 160%; }
+            100% { left: 160%; }
         }
 
         .ripple-wave {
             position: absolute;
             border-radius: 50%;
+            background: rgba(255, 255, 255, 0.55);
             transform: scale(0);
-            animation: rippleEffect 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-            background: radial-gradient(circle, rgba(255, 255, 255, 0.7) 0%, rgba(236, 72, 153, 0.35) 70%, transparent 100%);
+            animation: rippleAnim 0.55s ease-out forwards;
             pointer-events: none;
-            z-index: 10;
         }
 
         .ripple-wave.dark-ripple {
-            background: radial-gradient(circle, rgba(147, 51, 234, 0.28) 0%, rgba(236, 72, 153, 0.14) 70%, transparent 100%);
+            background: rgba(147, 51, 234, 0.22);
         }
 
-        @keyframes rippleEffect {
-            0% {
-                transform: scale(0);
-                opacity: 0.9;
-            }
-            100% {
-                transform: scale(2.8);
+        @keyframes rippleAnim {
+            to {
+                transform: scale(3.5);
                 opacity: 0;
             }
         }
 
-        /* เอฟเฟกต์แสงวิ่งผ่านปุ่มหลัก (Shimmer Sweep) */
-        .btn-run::after, .btn-submit::after, .btn-enter-auth::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 55%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent);
-            transform: skewX(-22deg);
-            animation: btnShimmer 3.2s infinite;
-            pointer-events: none;
-        }
-
-        @keyframes btnShimmer {
-            0%, 65% { left: -100%; }
-            100% { left: 160%; }
-        }
-
-        /* ---------------- Pending Approval Box ---------------- */
+        /* ---------------- Pending Approval Alert ---------------- */
         .pending-approval-box {
-            display: none;
             background: linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%);
             border: 1.5px solid #fda4af;
             border-radius: 20px;
             padding: 18px 20px;
             margin-bottom: 20px;
-            box-shadow: 0 10px 25px -8px rgba(225, 29, 72, 0.2);
+            display: none;
+            box-shadow: 0 10px 25px -5px rgba(244, 63, 94, 0.15);
+            position: relative;
+            z-index: 10;
         }
 
         .pending-title {
-            font-size: 15.5px;
+            font-size: 16px;
             font-weight: 800;
             color: #be123c;
+            display: flex;
+            align-items: center;
+            gap: 8px;
             margin-bottom: 6px;
         }
 
@@ -140,7 +132,7 @@
 
         .pending-actions {
             display: flex;
-            gap: 8px;
+            gap: 10px;
             flex-wrap: wrap;
         }
 
@@ -163,9 +155,7 @@
             border-radius: 12px;
             font-size: 12.5px;
             font-weight: 700;
-            display: inline-flex;
-            align-items: center;
-            box-shadow: 0 4px 12px rgba(225, 29, 72, 0.3);
+            display: inline-block;
         }
 
         /* ---------------- Intro Promo Video Overlay ---------------- */
@@ -206,11 +196,6 @@
             font-size: 12px;
             font-weight: 700;
             cursor: pointer;
-        }
-
-        .btn-skip-intro:hover {
-            background: #9333ea;
-            border-color: #9333ea;
         }
 
         .video-frame {
@@ -352,6 +337,7 @@
             font-weight: 800;
             font-size: 12px;
             box-shadow: 0 6px 16px rgba(147, 51, 234, 0.4);
+            transition: transform 0.15s;
         }
 
         .run-btn-sim.clicked {
@@ -557,7 +543,6 @@
             box-shadow: 0 25px 50px -12px rgba(147, 51, 234, 0.25);
             border: 1px solid rgba(243, 232, 255, 0.8);
             text-align: center;
-            position: relative;
         }
 
         .auth-logo {
@@ -689,7 +674,7 @@
         /* ---------------- App Layout (Desktop Default) ---------------- */
         .sidebar {
             width: 270px;
-            background: #ffffff;
+            background: rgba(255, 255, 255, 0.96);
             border-right: 1px solid var(--border-color);
             padding: 28px 20px;
             display: flex;
@@ -1446,7 +1431,7 @@
     <!-- ลายน้ำพื้นหลังทั่วหน้าเว็บ -->
     <div class="global-watermark"></div>
 
-    <!-- 0. INTRO PROMO VIDEO OVERLAY (เล่น 1 รอบก่อนเข้าสู่ระบบ/สมัครสมาชิก) -->
+    <!-- 0. INTRO PROMO VIDEO OVERLAY -->
     <div id="introOverlay" class="intro-overlay">
         <div class="intro-top-actions">
             <span class="intro-label">🎬 ตัวอย่างการทำงาน (14 วินาที)</span>
@@ -2055,7 +2040,7 @@
             ripple.addEventListener('animationend', () => ripple.remove());
         });
 
-        // ================= INTRO PROMO VIDEO LOGIC (เล่น 1 ครั้งก่อนเข้าสู่ระบบ) =================
+        // ================= INTRO PROMO VIDEO LOGIC =================
         const scenesData = [
             {
                 badge: '⚡ TELEAUTO PRO • CLOUD BOT',
@@ -2065,3 +2050,972 @@
             {
                 badge: '📱 ใช้งานผ่านมือถือ 100%',
                 headline: 'เลือกกลุ่มเป้าหมาย แล้วกด RUN ปุ่มเดียวจบ!',
+                duration: 3600
+            },
+            {
+                badge: '🛡️ ระบบหน่วงเวลา 35–85 วิ',
+                headline: 'รันบนคลาวด์ 24 ชม. ปิดจอนอนได้เลย ไม่ต้องเปิดคอม!',
+                duration: 3600
+            },
+            {
+                badge: '🔥 ตารางเป๊ะ • อิโมจิครบ',
+                headline: 'เด้งเข้ากลุ่มจริง! ตารางสวย อิโมจิพรีเมียมครบ 100%',
+                duration: 3800
+            }
+        ];
+
+        function clearIntroTimers() {
+            introTimers.forEach(t => clearTimeout(t));
+            introTimers = [];
+        }
+
+        function startIntroOnce() {
+            clearIntroTimers();
+            document.getElementById('introOverlay').style.display = 'flex';
+            document.getElementById('authOverlay').style.display = 'none';
+
+            document.querySelectorAll('.p-fill').forEach(el => {
+                el.style.transition = 'none';
+                el.style.width = '0%';
+            });
+            document.getElementById('cursorTap').classList.remove('show');
+            const runBtn = document.getElementById('simRunBtn');
+            runBtn.classList.remove('clicked');
+            runBtn.innerText = '▶ RUN ยิงโพสต์';
+            document.getElementById('simSentCount').innerText = '1';
+            document.getElementById('simLogList').innerHTML = `
+                <div class="log-row-sim"><span>✅ ตลาดนัดแม่ค้าออนไลน์</span><span>สำเร็จ</span></div>
+            `;
+
+            let elapsed = 0;
+            scenesData.forEach((sc, idx) => {
+                const t = setTimeout(() => {
+                    document.querySelectorAll('.scene').forEach(s => s.classList.remove('active'));
+                    document.getElementById(`scene${idx}`).classList.add('active');
+                    document.getElementById('topBadge').innerText = sc.badge;
+                    document.getElementById('headlineText').innerText = sc.headline;
+
+                    const bar = document.getElementById(`pf${idx}`);
+                    bar.style.transition = `width ${sc.duration}ms linear`;
+                    bar.style.width = '100%';
+
+                    if (idx === 1) {
+                        introTimers.push(setTimeout(() => {
+                            document.getElementById('cursorTap').classList.add('show');
+                        }, 900));
+                        introTimers.push(setTimeout(() => {
+                            runBtn.classList.add('clicked');
+                        }, 1350));
+                        introTimers.push(setTimeout(() => {
+                            runBtn.classList.remove('clicked');
+                            runBtn.innerText = '⏳ กำลังรันคิว...';
+                        }, 1600));
+                    }
+
+                    if (idx === 2) {
+                        introTimers.push(setTimeout(() => {
+                            document.getElementById('simSentCount').innerText = '2';
+                            document.getElementById('simLogList').innerHTML += `
+                                <div class="log-row-sim"><span>✅ กลุ่มซื้อขายสินค้าออนไลน์ 24 ชม.</span><span>สำเร็จ</span></div>
+                            `;
+                        }, 1100));
+                        introTimers.push(setTimeout(() => {
+                            document.getElementById('simSentCount').innerText = '3';
+                            document.getElementById('simLogList').innerHTML += `
+                                <div class="log-row-sim"><span>✅ กลุ่มโปรโมทร้านค้า & รีวิวสินค้า</span><span>สำเร็จ</span></div>
+                            `;
+                        }, 2200));
+                    }
+                }, elapsed);
+
+                introTimers.push(t);
+                elapsed += sc.duration;
+            });
+
+            const endTimer = setTimeout(() => {
+                finishIntroToAuth();
+            }, elapsed + 300);
+            introTimers.push(endTimer);
+        }
+
+        function finishIntroToAuth() {
+            clearIntroTimers();
+            sessionStorage.setItem('teleauto_intro_seen', '1');
+            document.getElementById('introOverlay').style.display = 'none';
+            document.getElementById('authOverlay').style.display = 'flex';
+        }
+
+        function replayIntroVideo() {
+            startIntroOnce();
+        }
+
+        // ================= IN-APP TUTORIAL VIDEO PLAYER LOGIC =================
+        const tutorialSteps = [
+            {
+                badge: 'ขั้นตอนที่ 1 / 4 • เตรียมโพสต์',
+                title: 'ส่งโพสต์ตารางไว้ใน Saved Messages',
+                duration: 5000,
+                html: `
+                    <div>
+                        <div class="tg-header">🔖 Telegram > Saved Messages</div>
+                        <div class="tg-bubble">
+                            <div style="font-weight: 800; color: #1e40af; margin-bottom: 4px;">✨ รายการสินค้าร้านค้า ✨</div>
+                            <div class="tg-quote-table">
+                                <strong>สินค้า A</strong> | เกรดพรีเมียม | <strong>2,000.-</strong><br>
+                                <strong>สินค้า B</strong> | ชุดเซ็ตครบ | <strong>1,500.-</strong>
+                            </div>
+                            <div>💎 อิโมจิพรีเมียม + ตารางจัดเต็ม</div>
+                        </div>
+                    </div>
+                    <div style="background: #fef3c7; color: #92400e; padding: 8px; border-radius: 10px; font-size: 11px; font-weight: 700; text-align: center;">
+                        💡 ทริค: กดจุดสามจุด ⋮ ใน Saved Messages > เลือก "ดูเป็นข้อความ (View as Messages)" แล้วกดดึงพรีวิวในเว็บ
+                    </div>
+                `
+            },
+            {
+                badge: 'ขั้นตอนที่ 2 / 4 • เชื่อมต่อบัญชี',
+                title: 'ผูกเบอร์ Telegram ด้วยรหัส OTP',
+                duration: 5000,
+                html: `
+                    <div>
+                        <div style="font-weight: 800; font-size: 13px; color: #9333ea; margin-bottom: 8px;">👤 บัญชี Telegram ของฉัน</div>
+                        <div style="background: #fff; border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 10px; margin-bottom: 8px;">
+                            <div style="font-size: 11px; color: #64748b;">1. กรอกเบอร์โทรพร้อมรหัสประเทศ</div>
+                            <div style="font-weight: 800; font-size: 14px; color: #1e293b; margin-top: 2px;">+66812345678</div>
+                        </div>
+                        <div style="background: #fff; border: 1.5px solid #a855f7; border-radius: 12px; padding: 10px;">
+                            <div style="font-size: 11px; color: #9333ea; font-weight: 700;">2. กรอกรหัส OTP 5 หลักจากแอป Telegram</div>
+                            <div style="font-weight: 800; font-size: 18px; letter-spacing: 4px; color: #059669; margin-top: 2px;">4 8 2 9 1</div>
+                        </div>
+                    </div>
+                    <div style="background: #ecfdf5; color: #065f46; padding: 8px; border-radius: 10px; font-size: 11px; font-weight: 700; text-align: center;">
+                        ✅ เชื่อมต่อครั้งเดียว ใช้งานได้ต่อเนื่อง 24 ชม.
+                    </div>
+                `
+            },
+            {
+                badge: 'ขั้นตอนที่ 3 / 4 • เลือกกลุ่มเป้าหมาย',
+                title: 'ดึงกลุ่มและติ๊กเลือกห้องที่ต้องการยิง',
+                duration: 5000,
+                html: `
+                    <div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <span style="font-weight: 800; font-size: 12.5px;">📁 ล็อกกลุ่มของฉัน</span>
+                            <span style="background: #f3e8ff; color: #9333ea; padding: 2px 8px; border-radius: 10px; font-size: 10.5px; font-weight: 700;">เลือกไว้ 62 กลุ่ม</span>
+                        </div>
+                        <div class="group-item-sim">☑️ กลุ่มซื้อขายสินค้าออนไลน์ 24 ชม.</div>
+                        <div class="group-item-sim">☑️ ตลาดนัดแม่ค้าออนไลน์ (45K)</div>
+                        <div class="group-item-sim">☑️ กลุ่มโปรโมทร้านค้า & รีวิวสินค้า</div>
+                        <div class="group-item-sim" style="opacity: 0.5;">⬜ กลุ่มพูดคุยทั่วไป (ไม่เลือก)</div>
+                    </div>
+                    <div style="background: #f3e8ff; color: #7e22ce; padding: 8px; border-radius: 10px; font-size: 11px; font-weight: 700; text-align: center;">
+                        🎯 บอทจะยิงเฉพาะกลุ่มที่มีเครื่องหมายติ๊กถูกสีฟ้าเท่านั้น
+                    </div>
+                `
+            },
+            {
+                badge: 'ขั้นตอนที่ 4 / 4 • เริ่มยิงโพสต์ 24 ชม.',
+                title: 'กด ▶ RUN ยิงโพสต์ แล้วปิดจอนอนได้เลย!',
+                duration: 5500,
+                html: `
+                    <div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <span style="font-weight: 800; font-size: 13px; color: #059669;">⚡ กำลังรันคิวสด...</span>
+                            <span style="background: #9333ea; color: #fff; padding: 4px 10px; border-radius: 8px; font-size: 11px; font-weight: 700;">▶ RUN ยิงโพสต์</span>
+                        </div>
+                        <div class="log-row-sim"><span>✅ ตลาดนัดแม่ค้าออนไลน์</span><span>สำเร็จ</span></div>
+                        <div class="log-row-sim"><span>✅ กลุ่มซื้อขายสินค้า 24 ชม.</span><span>สำเร็จ</span></div>
+                        <div style="background: #fffbeb; border: 1px solid #fde68a; color: #b45309; padding: 8px; border-radius: 10px; font-size: 11px; font-weight: 700; margin-top: 6px; text-align: center;">
+                            ⏳ สุ่มหน่วงเวลารอบถัดไป 48 วินาที (ป้องกันแบน)
+                        </div>
+                    </div>
+                    <div style="background: #ecfdf5; color: #065f46; padding: 8px; border-radius: 10px; font-size: 11px; font-weight: 700; text-align: center;">
+                        🎉 ตาราง + อิโมจิพรีเมียมเข้ากลุ่มครบ 100% ปิดจอมือถือได้ทันที!
+                    </div>
+                `
+            }
+        ];
+
+        function clearTutTimers() {
+            tutTimers.forEach(t => clearTimeout(t));
+            tutTimers = [];
+        }
+
+        function playTutorialSequence(startIndex = 0) {
+            clearTutTimers();
+            let elapsed = 0;
+
+            for (let i = 0; i < tutorialSteps.length; i++) {
+                const bar = document.getElementById(`tpf${i}`);
+                if (bar) {
+                    bar.style.transition = 'none';
+                    bar.style.width = i < startIndex ? '100%' : '0%';
+                }
+            }
+
+            for (let idx = startIndex; idx < tutorialSteps.length; idx++) {
+                const step = tutorialSteps[idx];
+                const t = setTimeout(() => {
+                    currentTutStep = idx;
+                    document.getElementById('tutBadge').innerText = step.badge;
+                    document.getElementById('tutTitle').innerText = step.title;
+                    document.getElementById('tutScreenContent').innerHTML = step.html;
+
+                    document.querySelectorAll('.tut-step-card').forEach((card, cIdx) => {
+                        if (cIdx === idx) card.classList.add('active-step');
+                        else card.classList.remove('active-step');
+                    });
+
+                    const bar = document.getElementById(`tpf${idx}`);
+                    if (bar) {
+                        bar.style.transition = `width ${step.duration}ms linear`;
+                        bar.style.width = '100%';
+                    }
+                }, elapsed);
+
+                tutTimers.push(t);
+                elapsed += step.duration;
+            }
+        }
+
+        function prevTutorialStep() {
+            const prev = currentTutStep > 0 ? currentTutStep - 1 : 0;
+            playTutorialSequence(prev);
+        }
+
+        function nextTutorialStep() {
+            const next = currentTutStep < tutorialSteps.length - 1 ? currentTutStep + 1 : 0;
+            playTutorialSequence(next);
+        }
+
+        // ================= APP & AUTH LOGIC =================
+        function sanitizeUsernameInput(inputEl) {
+            let val = inputEl.value.toLowerCase();
+            if (val.endsWith('@teleauto.app')) {
+                val = val.replace('@teleauto.app', '');
+            }
+            val = val.replace(/[^a-z0-9._-]/g, '');
+            inputEl.value = val;
+        }
+
+        function switchPage(page) {
+            document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
+            const activeBtn = document.getElementById(`nav-${page}`);
+            if (activeBtn) activeBtn.classList.add('active');
+
+            const sections = ['sec-banner', 'sec-tutorial', 'sec-posts', 'sec-accounts', 'sec-groups', 'sec-queue', 'sec-pricing', 'sec-admin'];
+            sections.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.style.display = 'none';
+            });
+
+            if (page === 'dashboard') {
+                document.getElementById('sec-banner').style.display = 'block';
+                document.getElementById('sec-accounts').style.display = 'block';
+                document.getElementById('sec-groups').style.display = 'block';
+            } else if (page === 'tutorial') {
+                document.getElementById('sec-tutorial').style.display = 'block';
+                playTutorialSequence(0);
+            } else if (page === 'posts') {
+                document.getElementById('sec-posts').style.display = 'block';
+                loadSavedMessagePreview();
+            } else if (page === 'accounts') {
+                document.getElementById('sec-accounts').style.display = 'block';
+            } else if (page === 'groups') {
+                document.getElementById('sec-groups').style.display = 'block';
+            } else if (page === 'queue') {
+                document.getElementById('sec-queue').style.display = 'block';
+                refreshQueueAndLogs();
+            } else if (page === 'pricing') {
+                document.getElementById('sec-pricing').style.display = 'block';
+            } else if (page === 'admin') {
+                document.getElementById('sec-admin').style.display = 'block';
+                loadAdminUsers();
+            }
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        async function initApp() {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (session && session.user) {
+                currentUser = session.user;
+                showAppUI();
+                await Promise.all([loadUserLicense(), loadUserAccounts(), loadUserGroups()]);
+                startStatusPolling();
+            } else {
+                if (!sessionStorage.getItem('teleauto_intro_seen')) {
+                    startIntroOnce();
+                } else {
+                    showAuthUI();
+                }
+            }
+        }
+
+        function switchAuthTab(mode) {
+            authMode = mode;
+            const tabLogin = document.getElementById('tabLogin');
+            const tabRegister = document.getElementById('tabRegister');
+            const authSubmitBtn = document.getElementById('authSubmitBtn');
+            const authErrorMsg = document.getElementById('authErrorMsg');
+            const registerOwnerNotice = document.getElementById('registerOwnerNotice');
+            authErrorMsg.style.display = 'none';
+
+            if (mode === 'login') {
+                tabLogin.classList.add('active');
+                tabRegister.classList.remove('active');
+                registerOwnerNotice.style.display = 'none';
+                authSubmitBtn.innerText = 'เข้าสู่ระบบ';
+            } else {
+                tabRegister.classList.add('active');
+                tabLogin.classList.remove('active');
+                registerOwnerNotice.style.display = 'block';
+                authSubmitBtn.innerText = 'สมัครสมาชิก (ติดต่อ @huimin168 เพื่อขออนุมัติฟรี 3 วัน)';
+            }
+        }
+
+        async function handleAuth(event) {
+            event.preventDefault();
+            const rawUsername = document.getElementById('authEmail').value.trim().toLowerCase().replace(/[^a-z0-9._-]/g, '');
+            const password = document.getElementById('authPassword').value.trim();
+            const authErrorMsg = document.getElementById('authErrorMsg');
+            const authSubmitBtn = document.getElementById('authSubmitBtn');
+
+            authErrorMsg.style.display = 'none';
+
+            if (!rawUsername || rawUsername.length < 3) {
+                authErrorMsg.innerText = 'กรุณากรอกชื่อผู้ใช้งานภาษาอังกฤษหรือตัวเลขอย่างน้อย 3 ตัวอักษร';
+                authErrorMsg.style.display = 'block';
+                return;
+            }
+
+            if (password.length < 6) {
+                authErrorMsg.innerText = 'กรุณากรอกรหัสผ่านอย่างน้อย 6 ตัวอักษร';
+                authErrorMsg.style.display = 'block';
+                return;
+            }
+
+            const internalEmail = `${rawUsername}@teleauto.app`;
+
+            authSubmitBtn.disabled = true;
+            authSubmitBtn.innerText = 'กำลังประมวลผล...';
+
+            try {
+                if (authMode === 'login') {
+                    const { data, error } = await supabaseClient.auth.signInWithPassword({ email: internalEmail, password });
+                    if (error) {
+                        if (error.message.includes('Email not confirmed')) {
+                            throw new Error('ระบบยังติดยืนยันอีเมล กรุณาแจ้งผู้ดูแลให้ปิด Confirm email ใน Supabase');
+                        }
+                        throw new Error('ชื่อผู้ใช้งานหรือรหัสผ่านไม่ถูกต้อง กรุณาตรวจสอบตัวสะกดอีกครั้ง');
+                    }
+                    currentUser = data.user;
+                } else {
+                    const { data, error } = await supabaseClient.auth.signUp({ email: internalEmail, password });
+                    if (error) {
+                        if (error.message.includes('already registered')) {
+                            throw new Error(`ชื่อผู้ใช้ "${rawUsername}" มีคนใช้งานแล้ว กรุณาตั้งชื่ออื่นหรือกดแท็บเข้าสู่ระบบ`);
+                        }
+                        throw error;
+                    }
+                    if (!data.session) {
+                        throw new Error('สมัครสมาชิกสำเร็จแล้ว แต่ผู้ดูแลยังไม่ได้ปิด Confirm email ใน Supabase กรุณาแจ้ง @huimin168');
+                    }
+                    currentUser = data.user;
+                    alert(`สมัครสมาชิกชื่อ "${rawUsername}" เรียบร้อยแล้ว!\n\n⚠️ บัญชีของคุณอยู่ในสถานะ "รออนุมัติ" กรุณาทักแชทผู้ดูแล @huimin168 เพื่อขออนุมัติแพ็กเกจฟรี 3 วันก่อนจึงจะเริ่มใช้งานได้ครับ`);
+                }
+                showAppUI();
+                await Promise.all([loadUserLicense(), loadUserAccounts(), loadUserGroups()]);
+                startStatusPolling();
+            } catch (err) {
+                authErrorMsg.innerText = err.message || 'เกิดข้อผิดพลาดในการตรวจสอบสิทธิ์';
+                authErrorMsg.style.display = 'block';
+            } finally {
+                authSubmitBtn.disabled = false;
+                authSubmitBtn.innerText = authMode === 'login' ? 'เข้าสู่ระบบ' : 'สมัครสมาชิก (ติดต่อ @huimin168 เพื่อขออนุมัติฟรี 3 วัน)';
+            }
+        }
+
+        async function handleLogout() {
+            if (statusInterval) clearInterval(statusInterval);
+            clearTutTimers();
+            await supabaseClient.auth.signOut();
+            currentUser = null;
+            hasActiveLicense = false;
+            document.getElementById('nav-admin').style.display = 'none';
+            document.getElementById('pendingApprovalBox').style.display = 'none';
+            document.getElementById('accountsList').innerHTML = '';
+            document.getElementById('groupsList').innerHTML = '';
+            showAuthUI();
+        }
+
+        function showAppUI() {
+            clearIntroTimers();
+            document.getElementById('introOverlay').style.display = 'none';
+            document.getElementById('authOverlay').style.display = 'none';
+            const uname = currentUser.email.split('@')[0];
+            document.getElementById('userEmailBadge').innerText = uname;
+            document.getElementById('pendingUsernameText').innerText = uname;
+        }
+
+        function showAuthUI() {
+            document.getElementById('introOverlay').style.display = 'none';
+            document.getElementById('authOverlay').style.display = 'flex';
+        }
+
+        function copyPendingUsername() {
+            if (!currentUser) return;
+            const uname = currentUser.email.split('@')[0];
+            navigator.clipboard.writeText(uname).then(() => {
+                alert(`คัดลอกชื่อผู้ใช้ "${uname}" เรียบร้อยแล้ว! ส่งให้ผู้ดูแล @huimin168 เพื่อเปิดสิทธิ์ฟรี 3 วันได้เลยครับ`);
+            }).catch(() => {
+                alert(`ชื่อผู้ใช้ของคุณคือ: ${uname}`);
+            });
+        }
+
+        async function getAuthHeader() {
+            const { data: { session }, error } = await supabaseClient.auth.getSession();
+            if (error || !session || !session.access_token) {
+                alert('เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่อีกครั้ง');
+                await handleLogout();
+                throw new Error('No active session');
+            }
+            return {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session.access_token}`
+            };
+        }
+
+        async function loadUserLicense() {
+            if (!currentUser) return;
+            const vipBadge = document.getElementById('userVipBadge');
+            const adminNav = document.getElementById('nav-admin');
+            const pendingBox = document.getElementById('pendingApprovalBox');
+            try {
+                const headers = await getAuthHeader();
+                const res = await fetch(`${BACKEND_URL}/api/license/status`, { headers });
+                const result = await res.json();
+
+                if (result.isAdmin) {
+                    adminNav.style.display = 'flex';
+                } else {
+                    adminNav.style.display = 'none';
+                }
+
+                if (result.valid && result.expireDate) {
+                    hasActiveLicense = true;
+                    pendingBox.style.display = 'none';
+                    const exp = new Date(result.expireDate);
+                    vipBadge.innerText = `สมาชิก VIP (หมดอายุ: ${exp.getDate()}/${exp.getMonth()+1}/${exp.getFullYear()+543})`;
+                    vipBadge.parentElement.style.background = '#fffbeb';
+                    vipBadge.parentElement.style.color = '#d97706';
+                } else {
+                    hasActiveLicense = false;
+                    pendingBox.style.display = 'block';
+                    vipBadge.innerText = 'รออนุมัติสิทธิ์ (ติดต่อ @huimin168)';
+                    vipBadge.parentElement.style.background = '#fef2f2';
+                    vipBadge.parentElement.style.color = '#dc2626';
+                }
+            } catch (e) {
+                hasActiveLicense = false;
+                pendingBox.style.display = 'block';
+                vipBadge.innerText = 'รออนุมัติสิทธิ์ (ติดต่อ @huimin168)';
+            }
+        }
+
+        // ================= ADMIN FUNCTIONS =================
+        async function loadAdminUsers() {
+            const tbody = document.getElementById('adminUsersTableBody');
+            tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #94a3b8; padding: 24px;">กำลังโหลดรายชื่อสมาชิก...</td></tr>`;
+            try {
+                const headers = await getAuthHeader();
+                const res = await fetch(`${BACKEND_URL}/api/admin/users`, { headers });
+                const result = await res.json();
+                if (!result.success) throw new Error(result.error);
+
+                adminUsersCache = result.users || [];
+                renderAdminUsers(adminUsersCache);
+            } catch (e) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #ef4444; padding: 24px;">เกิดข้อผิดพลาด: ${e.message}</td></tr>`;
+            }
+        }
+
+        function renderAdminUsers(users) {
+            const tbody = document.getElementById('adminUsersTableBody');
+            if (!users || users.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #94a3b8; padding: 24px;">ไม่พบรายชื่อสมาชิก</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = users.map(u => {
+                const now = new Date();
+                const expDate = u.expire_at ? new Date(u.expire_at) : null;
+                const isValid = u.is_active && expDate && expDate > now;
+                const expText = expDate ? `${expDate.getDate()}/${expDate.getMonth()+1}/${expDate.getFullYear()+543} ${expDate.toLocaleTimeString('th-TH', {hour:'2-digit', minute:'2-digit'})}` : '-';
+                const tgInfo = u.tg_phone ? `${u.tg_name || ''} (${u.tg_phone})` : '<span style="color:#94a3b8;">ยังไม่ผูกเบอร์</span>';
+
+                return `
+                    <tr>
+                        <td translate="no" style="font-weight: 700;">${u.username}</td>
+                        <td translate="no" style="font-size: 12px;">${tgInfo}</td>
+                        <td>
+                            <span class="${isValid ? 'status-badge-ok' : 'status-badge-err'}">
+                                ${isValid ? (u.plan_type || 'VIP ใช้งานได้') : 'รออนุมัติ / หมดอายุ'}
+                            </span>
+                        </td>
+                        <td style="font-size: 12px; color: var(--text-muted); white-space: nowrap;">${isValid ? expText : '-'}</td>
+                        <td>
+                            <div class="admin-btn-group">
+                                <button class="btn-grant" style="background: #f3e8ff; color: #7e22ce;" onclick="adminGrantDays('${u.id}', '${u.username}', 3, 'TRIAL_3D')">+3 วัน</button>
+                                <button class="btn-grant" style="background: #e0f2fe; color: #0369a1;" onclick="adminGrantDays('${u.id}', '${u.username}', 7, 'STARTER_7D')">+7 วัน</button>
+                                <button class="btn-grant" style="background: #dcfce7; color: #15803d;" onclick="adminGrantDays('${u.id}', '${u.username}', 30, 'PRO_30D')">+30 วัน</button>
+                                <button class="btn-grant" style="background: #fef3c7; color: #b45309;" onclick="adminGrantDays('${u.id}', '${u.username}', 90, 'VIP_90D')">+90 วัน</button>
+                                <button class="btn-grant" style="background: #fee2e2; color: #b91c1c;" onclick="adminRevokeUser('${u.id}', '${u.username}')">ระงับ</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function filterAdminUsers() {
+            const kw = document.getElementById('adminSearchInput').value.toLowerCase();
+            const filtered = adminUsersCache.filter(u =>
+                (u.username || '').toLowerCase().includes(kw) ||
+                (u.tg_phone || '').toLowerCase().includes(kw) ||
+                (u.tg_name || '').toLowerCase().includes(kw)
+            );
+            renderAdminUsers(filtered);
+        }
+
+        async function adminGrantDays(targetUserId, username, days, planType) {
+            if (!confirm(`ยืนยันอนุมัติเพิ่ม ${days} วัน ให้กับผู้ใช้ "${username}" ใช่หรือไม่?`)) return;
+            try {
+                const headers = await getAuthHeader();
+                const res = await fetch(`${BACKEND_URL}/api/admin/grant-license`, {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify({ targetUserId, days, planType })
+                });
+                const result = await res.json();
+                if (!result.success) throw new Error(result.error);
+
+                alert(result.message);
+                await Promise.all([loadAdminUsers(), loadUserLicense()]);
+            } catch (e) {
+                alert('เกิดข้อผิดพลาด: ' + e.message);
+            }
+        }
+
+        async function adminRevokeUser(targetUserId, username) {
+            if (!confirm(`ยืนยันการระงับสิทธิ์ใช้งานของผู้ใช้ "${username}" ใช่หรือไม่?`)) return;
+            try {
+                const headers = await getAuthHeader();
+                const res = await fetch(`${BACKEND_URL}/api/admin/revoke-license`, {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify({ targetUserId })
+                });
+                const result = await res.json();
+                if (!result.success) throw new Error(result.error);
+
+                alert(result.message);
+                await Promise.all([loadAdminUsers(), loadUserLicense()]);
+            } catch (e) {
+                alert('เกิดข้อผิดพลาด: ' + e.message);
+            }
+        }
+
+        // ================= USER FUNCTIONS =================
+        async function loadUserAccounts() {
+            if (!currentUser) return;
+            const list = document.getElementById('accountsList');
+            const countBadge = document.getElementById('sidebarAccountCount');
+
+            const { data: accounts } = await supabaseClient
+                .from('accounts')
+                .select('*')
+                .eq('user_id', currentUser.id);
+
+            if (!accounts || accounts.length === 0) {
+                list.innerHTML = `
+                    <div style="text-align: center; padding: 26px; border: 2px dashed #e2e8f0; border-radius: 16px; color: #94a3b8; font-size: 13px;">
+                        ยังไม่มีบัญชี Telegram ที่เชื่อมต่อ กรุณากดปุ่มเพื่อผูกบัญชี
+                    </div>
+                `;
+                countBadge.innerText = '0';
+                return;
+            }
+
+            countBadge.innerText = accounts.length.toString();
+            list.innerHTML = accounts.map(acc => `
+                <div class="account-item">
+                    <div>
+                        <h4 translate="no" style="font-weight: 700; font-size: 14px;">${acc.first_name || 'Telegram User'}</h4>
+                        <p style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">เบอร์โทร: ${acc.phone}</p>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                        <span style="font-size: 12px; font-weight: 700; color: #059669; background: #ecfdf5; padding: 6px 12px; border-radius: 20px;">
+                            ● พร้อมทำงาน
+                        </span>
+                        <button onclick="disconnectTelegramAccount()" class="btn-danger-outline">
+                            🗑️ ตัดการเชื่อมต่อ
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function disconnectTelegramAccount() {
+            if (!confirm('ยืนยันการตัดการเชื่อมต่อบัญชี Telegram นี้? (รายชื่อกลุ่มที่ดึงไว้ของบัญชีนี้จะถูกล้างออกด้วย)')) {
+                return;
+            }
+            try {
+                const headers = await getAuthHeader();
+                const res = await fetch(`${BACKEND_URL}/api/telegram/disconnect`, {
+                    method: 'DELETE',
+                    headers
+                });
+                const result = await res.json();
+                if (!result.success) throw new Error(result.error);
+
+                alert(result.message);
+                await Promise.all([loadUserAccounts(), loadUserGroups()]);
+            } catch (e) {
+                alert(e.message || 'เกิดข้อผิดพลาดในการตัดการเชื่อมต่อ');
+            }
+        }
+
+        function updateSelectedCounter() {
+            const selectedCount = allGroupsCache.filter(g => g.is_selected === true).length;
+            const totalCount = allGroupsCache.length;
+            document.getElementById('selectedCountPill').innerText = `เลือกไว้ ${selectedCount} / ${totalCount} กลุ่ม`;
+            document.getElementById('sidebarGroupCount').innerText = `${selectedCount}/${totalCount} กลุ่ม`;
+        }
+
+        async function loadUserGroups() {
+            if (!currentUser) return;
+            const { data: groups } = await supabaseClient
+                .from('groups')
+                .select('*')
+                .eq('user_id', currentUser.id)
+                .order('group_name', { ascending: true });
+
+            allGroupsCache = groups || [];
+            updateSelectedCounter();
+            renderGroups(allGroupsCache);
+        }
+
+        function renderGroups(groups) {
+            const list = document.getElementById('groupsList');
+            if (!groups || groups.length === 0) {
+                list.innerHTML = `
+                    <div style="text-align: center; padding: 26px; border: 2px dashed #e2e8f0; border-radius: 16px; color: #94a3b8; font-size: 13px;">
+                        ยังไม่มีรายการกลุ่ม กรุณากด "ดึงกลุ่มจาก Telegram"
+                    </div>
+                `;
+                return;
+            }
+
+            list.innerHTML = groups.map(g => `
+                <div class="group-row">
+                    <label style="display: flex; align-items: center; gap: 12px; font-size: 13.5px; font-weight: 500; cursor: pointer; flex: 1;">
+                        <input type="checkbox" ${g.is_selected ? 'checked' : ''} onchange="toggleGroup('${g.id}', '${g.group_id}', this.checked, this)">
+                        <span translate="no" style="word-break: break-word;">${g.group_name}</span>
+                    </label>
+                    <span class="group-id-text" style="font-size: 11px; color: #94a3b8;">ID: ${g.group_id}</span>
+                </div>
+            `).join('');
+        }
+
+        function filterGroups() {
+            const keyword = document.getElementById('groupSearchInput').value.toLowerCase();
+            const filtered = allGroupsCache.filter(g => (g.group_name || '').toLowerCase().includes(keyword));
+            renderGroups(filtered);
+        }
+
+        async function loadSavedMessagePreview() {
+            const box = document.getElementById('savedMsgBox');
+            box.innerText = '⏳ กำลังดึงข้อความล่าสุดจาก Saved Messages...';
+            try {
+                const headers = await getAuthHeader();
+                const res = await fetch(`${BACKEND_URL}/api/telegram/saved-messages`, { headers });
+                const result = await res.json();
+                if (!result.success) {
+                    box.innerText = `⚠️ ${result.message || 'ไม่พบข้อความ'}`;
+                    return;
+                }
+                const text = result.messages[0]?.text || '(โพสต์รูปภาพ/วิดีโอ หรือไม่มีข้อความตัวอักษร)';
+                box.innerText = text;
+            } catch (e) {
+                box.innerText = `❌ เกิดข้อผิดพลาด: ${e.message}`;
+            }
+        }
+
+        function startStatusPolling() {
+            if (statusInterval) clearInterval(statusInterval);
+            statusInterval = setInterval(() => {
+                if (document.getElementById('sec-queue').style.display !== 'none') {
+                    refreshQueueAndLogs();
+                }
+            }, 3000);
+        }
+
+        async function refreshQueueAndLogs() {
+            await Promise.all([fetchQueueStatus(), fetchExecutionLogs()]);
+        }
+
+        async function fetchQueueStatus() {
+            try {
+                const headers = await getAuthHeader();
+                const res = await fetch(`${BACKEND_URL}/api/status`, { headers });
+                const result = await res.json();
+                if (result.success && result.stats) {
+                    const s = result.stats;
+                    document.getElementById('statSent').innerText = s.sent;
+                    document.getElementById('statFailed').innerText = s.failed;
+                    document.getElementById('statRemaining').innerText = `${s.remaining} / ${s.total}`;
+                    document.getElementById('statDelay').innerText = `${s.nextDelay}s`;
+                    document.getElementById('statCurrentGroup').innerText = s.currentGroup;
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        async function fetchExecutionLogs() {
+            try {
+                const headers = await getAuthHeader();
+                const res = await fetch(`${BACKEND_URL}/api/logs`, { headers });
+                const result = await res.json();
+                const tbody = document.getElementById('logsTableBody');
+
+                if (!result.success || !result.logs || result.logs.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: #94a3b8; padding: 24px;">ยังไม่มีประวัติการส่งโพสต์</td></tr>`;
+                    return;
+                }
+
+                tbody.innerHTML = result.logs.map(log => {
+                    const timeStr = new Date(log.created_at).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                    const isOk = log.status === 'success';
+                    return `
+                        <tr>
+                            <td style="color: var(--text-muted); white-space: nowrap;">${timeStr}</td>
+                            <td translate="no" style="font-weight: 600;">${log.group_name || '-'}</td>
+                            <td>
+                                <span class="${isOk ? 'status-badge-ok' : 'status-badge-err'}">
+                                    ${isOk ? 'สำเร็จ' : 'ไม่สำเร็จ'}
+                                </span>
+                            </td>
+                            <td style="color: var(--text-muted); font-size: 12px;">${log.message || '-'}</td>
+                        </tr>
+                    `;
+                }).join('');
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function openTelegramModal() {
+            if (!hasActiveLicense) {
+                alert('⚠️ บัญชีของคุณยังไม่ได้รับการอนุมัติแพ็กเกจฟรี กรุณาติดต่อผู้ดูแล @huimin168 เพื่อเปิดสิทธิ์ก่อนจึงจะเชื่อมต่อบัญชี Telegram ได้ครับ');
+                return;
+            }
+            document.getElementById('tgModal').style.display = 'flex';
+            document.getElementById('tgStep1').style.display = 'block';
+            document.getElementById('tgStep2').style.display = 'none';
+            document.getElementById('tgModalError').style.display = 'none';
+        }
+
+        function closeTelegramModal() {
+            document.getElementById('tgModal').style.display = 'none';
+        }
+
+        async function requestTelegramCode() {
+            const phone = document.getElementById('tgPhoneInput').value.trim();
+            const btn = document.getElementById('btnSendCode');
+            const err = document.getElementById('tgModalError');
+
+            if (!phone) {
+                err.innerText = 'กรุณากรอกเบอร์โทรศัพท์';
+                err.style.display = 'block';
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerText = 'กำลังส่งรหัส...';
+            err.style.display = 'none';
+
+            try {
+                const headers = await getAuthHeader();
+                const res = await fetch(`${BACKEND_URL}/api/telegram/send-code`, {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify({ phone })
+                });
+                const result = await res.json();
+                if (!result.success) throw new Error(result.error);
+
+                document.getElementById('tgStep1').style.display = 'none';
+                document.getElementById('tgStep2').style.display = 'block';
+            } catch (e) {
+                err.innerText = e.message;
+                err.style.display = 'block';
+            } finally {
+                btn.disabled = false;
+                btn.innerText = 'ขอรหัส OTP';
+            }
+        }
+
+        async function verifyTelegramCode() {
+            const code = document.getElementById('tgCodeInput').value.trim();
+            const password = document.getElementById('tgPasswordInput').value.trim();
+            const btn = document.getElementById('btnVerifyCode');
+            const err = document.getElementById('tgModalError');
+
+            if (!code) {
+                err.innerText = 'กรุณากรอกรหัส OTP';
+                err.style.display = 'block';
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerText = 'กำลังยืนยัน...';
+            err.style.display = 'none';
+
+            try {
+                const headers = await getAuthHeader();
+                const res = await fetch(`${BACKEND_URL}/api/telegram/verify-code`, {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify({ code, password })
+                });
+                const result = await res.json();
+                if (!result.success) throw new Error(result.error);
+
+                closeTelegramModal();
+                await loadUserAccounts();
+            } catch (e) {
+                err.innerText = e.message;
+                err.style.display = 'block';
+            } finally {
+                btn.disabled = false;
+                btn.innerText = 'ยืนยันและเชื่อมต่อ';
+            }
+        }
+
+        async function syncTelegramGroups() {
+            if (!hasActiveLicense) {
+                alert('⚠️ บัญชีของคุณยังไม่ได้รับการอนุมัติแพ็กเกจฟรี กรุณาติดต่อผู้ดูแล @huimin168 เพื่อเปิดสิทธิ์ก่อนครับ');
+                return;
+            }
+            try {
+                const headers = await getAuthHeader();
+                const res = await fetch(`${BACKEND_URL}/api/telegram/sync-groups`, { method: 'POST', headers });
+                if (!res.ok) {
+                    const errData = await res.json().catch(() => null);
+                    throw new Error((errData && (errData.message || errData.error)) || 'เซิร์ฟเวอร์ใช้เวลาดึงข้อมูลนานกว่าปกติ กรุณากด F5 รีเฟรชหน้าเว็บเพื่อดูรายชื่อกลุ่ม');
+                }
+                const result = await res.json();
+                if (!result.success) throw new Error(result.error || result.message);
+                await loadUserGroups();
+                alert(result.message);
+            } catch (e) {
+                alert(e.message || 'เกิดข้อผิดพลาดในการดึงกลุ่ม');
+            }
+        }
+
+        async function toggleGroup(id, group_id, is_selected, checkboxEl) {
+            try {
+                const headers = await getAuthHeader();
+                const res = await fetch(`${BACKEND_URL}/api/groups/toggle`, {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify({ id, group_id, is_selected })
+                });
+                const result = await res.json();
+                if (!result.success) throw new Error(result.error);
+
+                const item = allGroupsCache.find(g => g.group_id === group_id || g.id === id);
+                if (item) item.is_selected = is_selected;
+                updateSelectedCounter();
+            } catch (e) {
+                if (checkboxEl) checkboxEl.checked = !is_selected;
+                alert('บันทึกการเลือกกลุ่มไม่สำเร็จ: ' + e.message);
+            }
+        }
+
+        async function toggleAllGroups(is_selected) {
+            try {
+                const headers = await getAuthHeader();
+                const res = await fetch(`${BACKEND_URL}/api/groups/toggle-all`, {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify({ is_selected })
+                });
+                const result = await res.json();
+                if (!result.success) throw new Error(result.error);
+                await loadUserGroups();
+            } catch (e) {
+                alert('เกิดข้อผิดพลาด: ' + e.message);
+            }
+        }
+
+        async function runQueue() {
+            if (!hasActiveLicense) {
+                alert('⚠️ บัญชีของคุณยังไม่ได้รับการอนุมัติแพ็กเกจฟรี กรุณาติดต่อผู้ดูแล @huimin168 เพื่อเปิดสิทธิ์ก่อนจึงจะเริ่มยิงโพสต์ได้ครับ');
+                return;
+            }
+            const selectedCount = allGroupsCache.filter(g => g.is_selected === true).length;
+            if (selectedCount === 0) {
+                alert('กรุณาติ๊กเลือกกลุ่มเป้าหมายที่ต้องการยิงโพสต์อย่างน้อย 1 กลุ่มก่อนกด RUN');
+                switchPage('groups');
+                return;
+            }
+            if (!confirm(`ยืนยันการเริ่มยิงโพสต์เฉพาะ ${selectedCount} กลุ่มที่เลือกไว้ใช่หรือไม่? (หากมีคิวค้างอยู่ ระบบจะส่งต่อจากงานเดิมให้อัตโนมัติ)`)) {
+                return;
+            }
+            try {
+                const headers = await getAuthHeader();
+                const res = await fetch(`${BACKEND_URL}/api/run`, { method: 'POST', headers });
+                const result = await res.json();
+                alert(result.message);
+                if (res.ok && result.success) {
+                    switchPage('queue');
+                }
+            } catch (e) {
+                alert(e.message);
+            }
+        }
+
+        async function stopQueue() {
+            try {
+                const headers = await getAuthHeader();
+                const res = await fetch(`${BACKEND_URL}/api/stop`, { method: 'POST', headers });
+                const result = await res.json();
+                alert(result.message);
+                refreshQueueAndLogs();
+            } catch (e) {
+                alert(e.message);
+            }
+        }
+
+        async function resetQueueProgress() {
+            if (!confirm('ต้องการล้างความคืบหน้าคิวที่ค้างอยู่ และเริ่มส่งใหม่ตั้งแต่กลุ่มแรกใช่หรือไม่?')) {
+                return;
+            }
+            try {
+                const headers = await getAuthHeader();
+                const res = await fetch(`${BACKEND_URL}/api/queue/reset`, { method: 'POST', headers });
+                const result = await res.json();
+                alert(result.message);
+                refreshQueueAndLogs();
+            } catch (e) {
+                alert(e.message);
+            }
+        }
+
+        window.onload = initApp;
+    </script>
+</body>
+</html>
