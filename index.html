@@ -37,13 +37,7 @@
             --input-bg: #1e293b;
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Kanit', sans-serif;
-            -webkit-tap-highlight-color: transparent;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Kanit', sans-serif; -webkit-tap-highlight-color: transparent; }
 
         body {
             background-color: var(--bg-main);
@@ -75,14 +69,8 @@
             transition: transform 0.16s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease, filter 0.2s ease;
         }
 
-        button:hover:not(:disabled), .banner-cta-btn:hover, .price-btn:hover, .owner-contact-link:hover {
-            transform: translateY(-2px);
-            filter: brightness(1.04);
-        }
-
-        button:active:not(:disabled), .banner-cta-btn:active, .price-btn:active, .owner-contact-link:active {
-            transform: scale(0.95) !important;
-        }
+        button:hover:not(:disabled), .banner-cta-btn:hover, .price-btn:hover, .owner-contact-link:hover { transform: translateY(-2px); filter: brightness(1.04); }
+        button:active:not(:disabled), .banner-cta-btn:active, .price-btn:active, .owner-contact-link:active { transform: scale(0.95) !important; }
 
         .btn-run::after, .btn-submit::after {
             content: '';
@@ -97,11 +85,7 @@
             pointer-events: none;
         }
 
-        @keyframes btnShimmer {
-            0% { left: -120%; }
-            35% { left: 160%; }
-            100% { left: 160%; }
-        }
+        @keyframes btnShimmer { 0% { left: -120%; } 35% { left: 160%; } 100% { left: 160%; } }
 
         .ripple-wave {
             position: absolute;
@@ -112,16 +96,8 @@
             pointer-events: none;
         }
 
-        .ripple-wave.dark-ripple {
-            background: rgba(168, 85, 247, 0.28);
-        }
-
-        @keyframes rippleAnim {
-            to {
-                transform: scale(3.5);
-                opacity: 0;
-            }
-        }
+        .ripple-wave.dark-ripple { background: rgba(168, 85, 247, 0.28); }
+        @keyframes rippleAnim { to { transform: scale(3.5); opacity: 0; } }
 
         .autoloop-card {
             background: linear-gradient(135deg, rgba(147, 51, 234, 0.08) 0%, rgba(236, 72, 153, 0.08) 100%);
@@ -139,174 +115,40 @@
         }
 
         .autoloop-info { flex: 1; min-width: 240px; }
-
-        .autoloop-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            background: linear-gradient(90deg, #9333ea, #ec4899);
-            color: #ffffff;
-            font-size: 10.5px;
-            font-weight: 800;
-            padding: 3px 10px;
-            border-radius: 20px;
-            margin-bottom: 5px;
-        }
-
+        .autoloop-badge { display: inline-flex; align-items: center; gap: 5px; background: linear-gradient(90deg, #9333ea, #ec4899); color: #ffffff; font-size: 10.5px; font-weight: 800; padding: 3px 10px; border-radius: 20px; margin-bottom: 5px; }
         .autoloop-controls { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .autoloop-select { padding: 10px 14px; background: var(--input-bg); color: var(--text-main); border: 1.5px solid var(--primary); border-radius: 12px; font-size: 13px; font-weight: 700; outline: none; cursor: pointer; }
+        .autoloop-status-pill { font-size: 12px; font-weight: 700; padding: 8px 12px; border-radius: 12px; background: var(--card-solid); border: 1px solid var(--border-strong); color: var(--text-muted); }
+        .autoloop-status-pill.active-loop { background: rgba(16, 185, 129, 0.14); border-color: rgba(16, 185, 129, 0.4); color: #10b981; }
 
-        .autoloop-select {
-            padding: 10px 14px;
-            background: var(--input-bg);
-            color: var(--text-main);
-            border: 1.5px solid var(--primary);
-            border-radius: 12px;
-            font-size: 13px;
-            font-weight: 700;
-            outline: none;
-            cursor: pointer;
-        }
+        .btn-theme-toggle { background: var(--card-solid); border: 1px solid var(--border-strong); color: var(--text-main); padding: 8px 14px; border-radius: 30px; font-size: 12.5px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
 
-        .autoloop-status-pill {
-            font-size: 12px;
-            font-weight: 700;
-            padding: 8px 12px;
-            border-radius: 12px;
-            background: var(--card-solid);
-            border: 1px solid var(--border-strong);
-            color: var(--text-muted);
-        }
-
-        .autoloop-status-pill.active-loop {
-            background: rgba(16, 185, 129, 0.14);
-            border-color: rgba(16, 185, 129, 0.4);
-            color: #10b981;
-        }
-
-        .btn-theme-toggle {
-            background: var(--card-solid);
-            border: 1px solid var(--border-strong);
-            color: var(--text-main);
-            padding: 8px 14px;
-            border-radius: 30px;
-            font-size: 12.5px;
-            font-weight: 700;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .pending-approval-box {
-            background: linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%);
-            border: 1.5px solid #fda4af;
-            border-radius: 20px;
-            padding: 18px 20px;
-            margin-bottom: 20px;
-            display: none;
-            box-shadow: 0 10px 25px -5px rgba(244, 63, 94, 0.15);
-            position: relative;
-            z-index: 10;
-        }
-
-        body.dark-theme .pending-approval-box {
-            background: linear-gradient(135deg, rgba(136, 19, 55, 0.45) 0%, rgba(76, 5, 25, 0.65) 100%);
-            border-color: #be123c;
-        }
-
+        .pending-approval-box { background: linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%); border: 1.5px solid #fda4af; border-radius: 20px; padding: 18px 20px; margin-bottom: 20px; display: none; box-shadow: 0 10px 25px -5px rgba(244, 63, 94, 0.15); position: relative; z-index: 10; }
+        body.dark-theme .pending-approval-box { background: linear-gradient(135deg, rgba(136, 19, 55, 0.45) 0%, rgba(76, 5, 25, 0.65) 100%); border-color: #be123c; }
         .pending-title { font-size: 16px; font-weight: 800; color: #be123c; display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
         body.dark-theme .pending-title { color: #fda4af; }
         .pending-desc { font-size: 13px; color: #881337; line-height: 1.55; margin-bottom: 12px; }
         body.dark-theme .pending-desc { color: #fecdd3; }
         .pending-actions { display: flex; gap: 10px; flex-wrap: wrap; }
-
-        .btn-copy-user {
-            background: var(--card-solid);
-            color: #be123c;
-            border: 1px solid #fda4af;
-            padding: 8px 14px;
-            border-radius: 12px;
-            font-size: 12.5px;
-            font-weight: 700;
-            cursor: pointer;
-        }
+        .btn-copy-user { background: var(--card-solid); color: #be123c; border: 1px solid #fda4af; padding: 8px 14px; border-radius: 12px; font-size: 12.5px; font-weight: 700; cursor: pointer; }
         body.dark-theme .btn-copy-user { color: #fda4af; border-color: #9f1239; }
+        .btn-contact-admin-urgent { background: linear-gradient(135deg, #e11d48, #9333ea); color: #ffffff; text-decoration: none; padding: 8px 16px; border-radius: 12px; font-size: 12.5px; font-weight: 700; display: inline-block; border: none; cursor: pointer; }
 
-        .btn-contact-admin-urgent {
-            background: linear-gradient(135deg, #e11d48, #9333ea);
-            color: #ffffff;
-            text-decoration: none;
-            padding: 8px 16px;
-            border-radius: 12px;
-            font-size: 12.5px;
-            font-weight: 700;
-            display: inline-block;
-        }
-
-        .intro-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(9, 13, 22, 0.94);
-            backdrop-filter: blur(10px);
-            z-index: 10000;
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 14px;
-        }
-
+        .intro-overlay { position: fixed; inset: 0; background: rgba(9, 13, 22, 0.94); backdrop-filter: blur(10px); z-index: 10000; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 14px; }
         .intro-top-actions { width: 100%; max-width: 370px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .intro-label { color: #e2e8f0; font-size: 12px; font-weight: 600; }
         .btn-skip-intro { background: rgba(255, 255, 255, 0.16); color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.3); padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 700; cursor: pointer; }
-
-        .video-frame {
-            width: 100%;
-            max-width: 370px;
-            height: 600px;
-            max-height: 82vh;
-            background: linear-gradient(160deg, #1e1b4b 0%, #311042 50%, #0f172a 100%);
-            border-radius: 26px;
-            border: 2px solid rgba(255, 255, 255, 0.18);
-            box-shadow: 0 25px 60px rgba(147, 51, 234, 0.45);
-            position: relative;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            padding: 18px 16px;
-            color: #ffffff;
-        }
-
+        .video-frame { width: 100%; max-width: 370px; height: 600px; max-height: 82vh; background: linear-gradient(160deg, #1e1b4b 0%, #311042 50%, #0f172a 100%); border-radius: 26px; border: 2px solid rgba(255, 255, 255, 0.18); box-shadow: 0 25px 60px rgba(147, 51, 234, 0.45); position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; padding: 18px 16px; color: #ffffff; }
         .progress-bars { display: flex; gap: 5px; z-index: 20; }
         .p-bar { flex: 1; height: 4px; background: rgba(255, 255, 255, 0.25); border-radius: 4px; overflow: hidden; }
         .p-fill { height: 100%; width: 0%; background: #f472b6; }
         .headline-box { text-align: center; margin-top: 8px; z-index: 20; min-height: 68px; }
         .badge-top { display: inline-block; background: linear-gradient(90deg, #9333ea, #ec4899); padding: 3px 12px; border-radius: 20px; font-size: 10.5px; font-weight: 700; margin-bottom: 5px; }
         .headline-text { font-size: 17.5px; font-weight: 800; line-height: 1.3; text-shadow: 0 2px 10px rgba(0,0,0,0.5); }
-
-        .phone-screen {
-            flex: 1;
-            background: #f8fafc;
-            border-radius: 20px;
-            margin: 10px 0;
-            padding: 12px;
-            color: #1e293b;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.4);
-            display: flex;
-            flex-direction: column;
-        }
-
+        .phone-screen { flex: 1; background: #f8fafc; border-radius: 20px; margin: 10px 0; padding: 12px; color: #1e293b; position: relative; overflow: hidden; box-shadow: 0 15px 35px rgba(0,0,0,0.4); display: flex; flex-direction: column; }
         .scene { display: none; flex-direction: column; height: 100%; animation: fadeIn 0.35s ease; }
         .scene.active { display: flex; }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(8px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
         .tg-header { background: #2481cc; color: white; padding: 8px 12px; border-radius: 12px; font-weight: 700; font-size: 12.5px; display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
         .tg-bubble { background: #eef6ff; border: 1px solid #bfdbfe; border-radius: 14px; padding: 9px 10px; font-size: 11px; line-height: 1.4; color: #1e293b; }
         .tg-quote-table { background: rgba(36, 129, 204, 0.12); border-left: 3px solid #2481cc; border-radius: 6px; padding: 6px 8px; margin: 5px 0; font-size: 10.5px; }
@@ -342,7 +184,7 @@
         .auth-tab-btn { flex: 1; padding: 10px 6px; border: none; background: transparent; font-size: 12px; font-weight: 600; color: var(--text-muted); border-radius: 10px; cursor: pointer; }
         .auth-tab-btn.active { background: var(--card-solid); color: var(--primary); box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
         .owner-notice-box { background: var(--primary-light); border: 1px solid rgba(168, 85, 247, 0.35); color: var(--text-main); border-radius: 14px; padding: 12px; font-size: 12px; line-height: 1.5; margin-bottom: 14px; text-align: left; }
-        .owner-contact-link { display: inline-block; margin-top: 8px; background: #9333ea; color: #ffffff; text-decoration: none; padding: 7px 14px; border-radius: 10px; font-weight: 600; font-size: 12px; }
+        .owner-contact-link { display: inline-block; margin-top: 8px; background: #9333ea; color: #ffffff; text-decoration: none; padding: 7px 14px; border-radius: 10px; font-weight: 600; font-size: 12px; border: none; cursor: pointer; }
         .input-group { text-align: left; margin-bottom: 14px; }
         .input-label { display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; }
         .input-hint { display: block; font-size: 11px; color: var(--text-muted); margin-top: 4px; }
@@ -390,7 +232,7 @@
         .price-amount { font-size: 30px; font-weight: 800; color: var(--text-main); margin: 8px 0 4px; }
         .price-per-day { font-size: 12px; color: #10b981; font-weight: 600; margin-bottom: 14px; }
         .price-features { list-style: none; font-size: 13px; color: var(--text-muted); margin-bottom: 18px; line-height: 1.8; }
-        .price-btn { display: block; text-align: center; text-decoration: none; background: var(--primary-light); color: var(--primary); font-weight: 700; font-size: 13px; padding: 12px; border-radius: 12px; }
+        .price-btn { display: block; width: 100%; border: none; cursor: pointer; text-align: center; text-decoration: none; background: var(--primary-light); color: var(--primary); font-weight: 700; font-size: 13px; padding: 12px; border-radius: 12px; }
         .price-card.featured .price-btn { background: linear-gradient(135deg, #9333ea 0%, #ec4899 100%); color: #ffffff; box-shadow: 0 6px 16px -4px rgba(147, 51, 234, 0.4); }
 
         .content-card { background: var(--card-bg); border-radius: 22px; padding: 24px; border: 1px solid var(--border-color); margin-bottom: 20px; box-shadow: 0 4px 16px -2px rgba(0, 0, 0, 0.04); position: relative; }
@@ -589,7 +431,7 @@
                 <strong>👑 สิทธิ์ทดลองใช้ฟรี 3 วัน (ติดต่อที่เจ้าของเท่านั้น)</strong><br>
                 <span>• หลังสมัครสมาชิก กรุณาแจ้งชื่อผู้ใช้กับผู้ดูแลเพื่ออนุมัติแพ็กเกจฟรีก่อนเริ่มใช้งาน</span><br>
                 <span>• 7 วัน: <strong>290 ฿</strong> | 30 วัน: <strong>890 ฿</strong> | 90 วัน: <strong>2,190 ฿</strong></span><br>
-                <a translate="no" href="[https://t.me/huimin168](https://t.me/huimin168)" target="_blank" class="owner-contact-link">💬 ติดต่อผู้ดูแล Telegram: @huimin168</a>
+                <button type="button" onclick="openSellerTelegram('ขอรับสิทธิ์ทดลองใช้ฟรี 3 วัน')" class="owner-contact-link">💬 ติดต่อผู้ดูแล Telegram: @huimin168</button>
             </div>
 
             <form id="authForm" onsubmit="handleAuth(event)">
@@ -710,12 +552,12 @@
             </div>
             <div class="pending-actions">
                 <button type="button" class="btn-copy-user" onclick="copyPendingUsername()">📋 คัดลอกชื่อผู้ใช้ของฉัน</button>
-                <a translate="no" href="[https://t.me/huimin168](https://t.me/huimin168)" target="_blank" class="btn-contact-admin-urgent">💬 ทักแชทผู้ดูแล @huimin168 เพื่อขออนุมัติฟรี 3 วัน</a>
+                <button type="button" onclick="openSellerTelegram('ขออนุมัติแพ็กเกจทดลองใช้ฟรี 3 วัน')" class="btn-contact-admin-urgent">💬 ทักแชทผู้ดูแล @huimin168 เพื่อขออนุมัติฟรี 3 วัน</button>
                 <button type="button" class="btn-copy-user" style="color: #10b981; border-color: #10b981;" onclick="loadUserLicense()">🔄 เช็กสถานะอนุมัติอีกครั้ง</button>
             </div>
         </div>
 
-        <!-- กล่องตั้งค่า Auto-Loop 24 ชม. (วนยิงซ้ำอัตโนมัติ) -->
+        <!-- กล่องตั้งค่า Auto-Loop 24 ชม. -->
         <div id="autoLoopControlBox" class="autoloop-card">
             <div class="autoloop-info">
                 <div class="autoloop-badge">🔁 AUTO-LOOP 24 ชม. • วนยิงซ้ำอัตโนมัติ</div>
@@ -745,7 +587,7 @@
                 ระบบบอทยิงโพสต์เข้ากลุ่มอัตโนมัติบนคลาวด์ 24 ชม. ส่งตรงจาก Saved Messages พร้อมตารางและอิโมจิพรีเมียมครบ 100% + หน่วงเวลา 35–85 วิ ป้องกันแบน
             </p>
             <div class="badge-tags">
-                <a translate="no" href="[https://t.me/huimin168](https://t.me/huimin168)" target="_blank" class="banner-cta-btn">💬 ติดต่อผู้ดูแล @huimin168 (รับสิทธิ์ฟรี 3 วัน)</a>
+                <button type="button" onclick="openSellerTelegram('ขอรับสิทธิ์ทดลองใช้ฟรี 3 วัน')" class="banner-cta-btn">💬 ติดต่อผู้ดูแล @huimin168 (รับสิทธิ์ฟรี 3 วัน)</button>
                 <button onclick="switchPage('tutorial')" class="banner-cta-btn" style="background: #fef08a; color: #854d0e;">🎬 ดูวิดีโอสอนใช้งาน 4 ขั้นตอน</button>
                 <button onclick="switchPage('pricing')" class="banner-cta-btn" style="background: rgba(255,255,255,0.22); color: #ffffff; backdrop-filter: blur(6px);">💎 ดูแพ็กเกจราคาทั้งหมด</button>
             </div>
@@ -857,12 +699,12 @@
             </div>
         </section>
 
-        <!-- SECTION: แพ็กเกจราคา -->
+        <!-- SECTION: แพ็กเกจราคา (กดแล้วเด้งเข้าแชท Telegram ผู้ขายพร้อมข้อความสั่งซื้ออัตโนมัติ) -->
         <section id="sec-pricing" class="content-card" style="display: none;">
             <div class="card-header">
                 <div>
                     <h3 style="font-size: 18px; font-weight: 700;">💎 แพ็กเกจเช่าใช้งาน TeleAuto PRO</h3>
-                    <p style="font-size: 12px; color: var(--text-muted);">รันบนเซิร์ฟเวอร์คลาวด์ 24 ชม. ไม่ต้องเปิดคอมหรือมือถือทิ้งไว้ (ติดต่อเปิดสิทธิ์กับ @huimin168)</p>
+                    <p style="font-size: 12px; color: var(--text-muted);">กดเลือกแพ็กเกจที่ต้องการ ระบบจะเด้งเข้าห้องแชท Telegram ของผู้ดูแล (@huimin168) ให้อัตโนมัติครับ</p>
                 </div>
             </div>
 
@@ -879,7 +721,7 @@
                             <li>✓ รันบนคลาวด์ ปิดหน้าจอมือถือได้ทันที</li>
                         </ul>
                     </div>
-                    <a translate="no" href="[https://t.me/huimin168](https://t.me/huimin168)" target="_blank" class="price-btn">สั่งซื้อแพ็กเกจ 7 วัน (@huimin168)</a>
+                    <button type="button" onclick="openSellerTelegram('แพ็กเกจ 7 วัน (290 บาท)')" class="price-btn">สั่งซื้อแพ็กเกจ 7 วัน (@huimin168)</button>
                 </div>
 
                 <div class="price-card featured">
@@ -895,7 +737,7 @@
                             <li>✓ ดูแลช่วยเหลือตลอดอายุการใช้งาน</li>
                         </ul>
                     </div>
-                    <a translate="no" href="[https://t.me/huimin168](https://t.me/huimin168)" target="_blank" class="price-btn">สมัครแพ็กเกจ 30 วัน (@huimin168)</a>
+                    <button type="button" onclick="openSellerTelegram('แพ็กเกจ 30 วัน (890 บาท)')" class="price-btn">สมัครแพ็กเกจ 30 วัน (@huimin168)</button>
                 </div>
 
                 <div class="price-card">
@@ -911,7 +753,7 @@
                             <li>✓ ซัพพอร์ตคิวด่วนพิเศษจากผู้ดูแล</li>
                         </ul>
                     </div>
-                    <a translate="no" href="[https://t.me/huimin168](https://t.me/huimin168)" target="_blank" class="price-btn">สมัครแพ็กเกจ 90 วัน (@huimin168)</a>
+                    <button type="button" onclick="openSellerTelegram('แพ็กเกจ 90 วัน (2,190 บาท)')" class="price-btn">สมัครแพ็กเกจ 90 วัน (@huimin168)</button>
                 </div>
             </div>
         </section>
@@ -1094,6 +936,21 @@
         let tutTimers = [];
         let currentTutStep = 0;
 
+        // ================= OPEN TELEGRAM CHAT DIRECTLY =================
+        function openSellerTelegram(packageName) {
+            const uname = currentUser && currentUser.email ? currentUser.email.split('@')[0] : '';
+            const msgText = uname
+                ? `สวัสดีครับ สนใจ${packageName} (Username: ${uname})`
+                : `สวัสดีครับ สนใจ${packageName}`;
+            const encodedText = encodeURIComponent(msgText);
+
+            window.location.href = `tg://resolve?domain=huimin168&text=${encodedText}`;
+
+            setTimeout(() => {
+                window.open(`https://t.me/huimin168?text=${encodedText}`, '_blank');
+            }, 600);
+        }
+
         // ================= AUTO-LOOP SETTINGS =================
         function getSavedLoopHours() {
             return parseInt(localStorage.getItem('teleauto_loop_hours') || '0', 10);
@@ -1171,7 +1028,7 @@
 
         applySavedTheme();
 
-        // ================= RIPPLE & CLICK GLOW EFFECT FOR ALL BUTTONS =================
+        // ================= RIPPLE & CLICK GLOW EFFECT =================
         document.addEventListener('pointerdown', function (e) {
             const target = e.target.closest('button, .banner-cta-btn, .price-btn, .owner-contact-link, .btn-contact-admin-urgent');
             if (!target || target.disabled) return;
