@@ -342,7 +342,7 @@
                         <div style="color: #2563eb; font-weight: 700; margin-top: 4px;">📲 ติดต่อสอบถาม: @huimin168</div>
                     </div>
                     <div style="margin-top: auto; text-align: center; font-size: 11px; color: #64748b; font-weight: 600;">
-                        เตรียมโพสต์สวยๆ ไว้ใน Saved Messages แค่ครั้งเดียว
+                        เตรียมโพสต์สวยๆ ไว้ใน Saved Messages 3–5 โพสต์เพื่อให้บอทสุ่มสลับ
                     </div>
                 </div>
 
@@ -382,7 +382,7 @@
                         <div class="log-row-sim"><span>✅ ตลาดนัดแม่ค้าออนไลน์</span><span>สำเร็จ</span></div>
                     </div>
                     <div style="margin-top: auto; text-align: center; font-size: 10.5px; color: #059669; font-weight: 700;">
-                        🛡️ ระบบสุ่มหน่วงเวลาอัตโนมัติ ป้องกันบัญชีโดนแบน 100%
+                        🛡️ สุ่มสลับโพสต์ + สุ่มเวลาพัก เนียนเหมือนคนโพสต์ 100%
                     </div>
                 </div>
 
@@ -557,23 +557,28 @@
             </div>
         </div>
 
-        <!-- กล่องตั้งค่า Auto-Loop 24 ชม. -->
+        <!-- กล่องตั้งค่า Smart Anti-Ban: สุ่มสลับโพสต์ + Auto-Loop 24 ชม. -->
         <div id="autoLoopControlBox" class="autoloop-card">
             <div class="autoloop-info">
-                <div class="autoloop-badge">🔁 AUTO-LOOP 24 ชม. • วนยิงซ้ำอัตโนมัติ</div>
-                <div style="font-size: 14.5px; font-weight: 700;">ตั้งค่ารอบวนยิงซ้ำอัตโนมัติเมื่อส่งครบทุกกลุ่ม</div>
+                <div class="autoloop-badge">🛡️ SMART ANTI-BAN • สุ่มสลับโพสต์ & AUTO-LOOP 24 ชม.</div>
+                <div style="font-size: 14.5px; font-weight: 700;">ตั้งค่าสุ่มสลับข้อความ และรอบวนยิงซ้ำแบบเนียนเหมือนคนโพสต์</div>
                 <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
-                    เมื่อบอทยิงครบทุกกลุ่มในรอบนั้นแล้ว ระบบจะพักตามเวลาที่เลือกและเริ่มวนยิงรอบใหม่ให้อัตโนมัติ (หยุดทันทีเมื่อกด STOP)
+                    บอทจะสุ่มสลับโพสต์จาก Saved Messages ไม่ซ้ำกัน และสุ่มเวลาพัก ±20% ในแต่ละรอบเพื่อลดการตรวจจับสแปมสูงสุด
                 </div>
             </div>
             <div class="autoloop-controls">
+                <select id="postRotateSelect" class="autoloop-select" onchange="onPostRotateChange(this.value)">
+                    <option value="1">📌 ใช้โพสต์ล่าสุด 1 โพสต์</option>
+                    <option value="3">🎲 สุ่มสลับ 3 โพสต์ล่าสุด</option>
+                    <option value="5">🎲 สุ่มสลับ 5 โพสต์ล่าสุด</option>
+                </select>
                 <select id="autoLoopSelect" class="autoloop-select" onchange="onAutoLoopChange(this.value)">
                     <option value="0">⏹ ยิงรอบเดียว (ปิดวนลูป)</option>
-                    <option value="1">🔁 วนยิงซ้ำทุก 1 ชั่วโมง</option>
-                    <option value="2">🔁 วนยิงซ้ำทุก 2 ชั่วโมง</option>
-                    <option value="3">🔁 วนยิงซ้ำทุก 3 ชั่วโมง</option>
-                    <option value="4">🔁 วนยิงซ้ำทุก 4 ชั่วโมง</option>
-                    <option value="6">🔁 วนยิงซ้ำทุก 6 ชั่วโมง</option>
+                    <option value="1">🔁 วนยิงซ้ำทุก ~1 ชม. (สุ่มเวลา)</option>
+                    <option value="2">🔁 วนยิงซ้ำทุก ~2 ชม. (สุ่มเวลา)</option>
+                    <option value="3">🔁 วนยิงซ้ำทุก ~3 ชม. (สุ่มเวลา)</option>
+                    <option value="4">🔁 วนยิงซ้ำทุก ~4 ชม. (สุ่มเวลา)</option>
+                    <option value="6">🔁 วนยิงซ้ำทุก ~6 ชม. (สุ่มเวลา)</option>
                 </select>
                 <div id="autoLoopStatusPill" class="autoloop-status-pill">สถานะ: ปิดวนลูป</div>
             </div>
@@ -584,7 +589,7 @@
             <div class="banner-pill">👑 EXCLUSIVE TRIAL — ติดต่อที่เจ้าของเท่านั้น</div>
             <h2 style="font-size: 24px; font-weight: 800; margin-bottom: 8px;">ทดลองใช้ฟรี 3 วันเต็ม! ติดต่อรับสิทธิ์ที่เจ้าของระบบเท่านั้น</h2>
             <p style="font-size: 13px; opacity: 0.95; max-width: 580px; line-height: 1.6;">
-                ระบบบอทยิงโพสต์เข้ากลุ่มอัตโนมัติบนคลาวด์ 24 ชม. ส่งตรงจาก Saved Messages พร้อมตารางและอิโมจิพรีเมียมครบ 100% + หน่วงเวลา 35–85 วิ ป้องกันแบน
+                ระบบบอทยิงโพสต์เข้ากลุ่มอัตโนมัติบนคลาวด์ 24 ชม. สุ่มสลับ 3–5 โพสต์จาก Saved Messages พร้อมตารางและอิโมจิพรีเมียมครบ 100% + สุ่มหน่วงเวลา 35–85 วิ
             </p>
             <div class="badge-tags">
                 <button type="button" onclick="openSellerTelegram('ขอรับสิทธิ์ทดลองใช้ฟรี 3 วัน')" class="banner-cta-btn">💬 ติดต่อผู้ดูแล @huimin168 (รับสิทธิ์ฟรี 3 วัน)</button>
@@ -633,9 +638,9 @@
                 <div class="tut-step-cards">
                     <div class="tut-step-card active-step" id="tcard0" onclick="playTutorialSequence(0)">
                         <span class="tut-step-num">ขั้นตอนที่ 1 • เตรียมโพสต์ต้นฉบับ</span>
-                        <h4 style="font-size: 15px; font-weight: 700; margin-bottom: 4px;">ส่งโพสต์ตาราง & อิโมจิพรีเมียมไว้ใน Saved Messages</h4>
+                        <h4 style="font-size: 15px; font-weight: 700; margin-bottom: 4px;">ส่งโพสต์ตาราง & อิโมจิพรีเมียมไว้ใน Saved Messages (แนะนำ 3–5 โพสต์)</h4>
                         <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.55;">
-                            เปิดแอป Telegram เข้าห้อง <strong>Saved Messages (เก็บข้อความ)</strong> แล้วพิมพ์หรือฟอร์เวิร์ดโพสต์ขายของล่าสุดไว้ด้านล่างสุด <strong>(แนะนำให้กดจุดสามจุดมุมขวาบน > เลือก "ดูเป็นข้อความ / View as Messages")</strong> จากนั้นมากดปุ่ม <strong>"🔄 ดึงพรีวิวโพสต์ล่าสุด"</strong> ในเมนูจัดการโพสต์
+                            เปิดแอป Telegram เข้าห้อง <strong>Saved Messages (เก็บข้อความ)</strong> แล้วส่งโพสต์ขายของที่แต่งคำแตกต่างกันเล็กน้อยไว้ 3–5 ข้อความ เพื่อให้ระบบสุ่มสลับยิงลดการซ้ำซาก จากนั้นกดเช็กพรีวิวในเมนูจัดการโพสต์
                         </p>
                     </div>
 
@@ -657,9 +662,9 @@
 
                     <div class="tut-step-card" id="tcard3" onclick="playTutorialSequence(3)">
                         <span class="tut-step-num">ขั้นตอนที่ 4 • กด RUN แล้วปิดจอนอนได้เลย!</span>
-                        <h4 style="font-size: 15px; font-weight: 700; margin-bottom: 4px;">รันบนเซิร์ฟเวอร์คลาวด์ 24 ชม. อัตโนมัติ</h4>
+                        <h4 style="font-size: 15px; font-weight: 700; margin-bottom: 4px;">รันบนเซิร์ฟเวอร์คลาวด์ 24 ชม. แบบสุ่มเวลาเนียนๆ</h4>
                         <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.55;">
-                            เลือกโหมด <strong>🔁 Auto-Loop 24 ชม.</strong> (ถ้าต้องการให้วนยิงซ้ำอัตโนมัติ) แล้วกดปุ่มสีม่วง <strong>▶ RUN ยิงโพสต์</strong> ระบบจะยิงโพสต์ตารางและอิโมจิพรีเมียมเข้ากลุ่มเป้าหมายทีละกลุ่ม พร้อมสุ่มหน่วงเวลา <strong>35–85 วินาที</strong> เพื่อเซฟบัญชี คุณสามารถปิดหน้าจอมือถือได้ทันที!
+                            เลือกโหมด <strong>🎲 สุ่มสลับ 3/5 โพสต์</strong> และ <strong>🔁 Auto-Loop 24 ชม.</strong> แล้วกดปุ่มสีม่วง <strong>▶ RUN ยิงโพสต์</strong> ระบบจะสุ่มยิงเข้ากลุ่มพร้อมสุ่มเวลาพักอัตโนมัติ ปิดหน้าจอมือถือได้ทันที!
                         </p>
                     </div>
                 </div>
@@ -699,7 +704,7 @@
             </div>
         </section>
 
-        <!-- SECTION: แพ็กเกจราคา (กดแล้วเด้งเข้าแชท Telegram ผู้ขายพร้อมข้อความสั่งซื้ออัตโนมัติ) -->
+        <!-- SECTION: แพ็กเกจราคา -->
         <section id="sec-pricing" class="content-card" style="display: none;">
             <div class="card-header">
                 <div>
@@ -716,7 +721,7 @@
                         <div class="price-per-day">เฉลี่ยเพียง 41 บาท / วัน</div>
                         <ul class="price-features">
                             <li>✓ ใช้งานเต็มระบบ 7 วัน (1 บัญชี)</li>
-                            <li>✓ โหมด Auto-Loop วนยิงซ้ำ 24 ชม.</li>
+                            <li>✓ สุ่มสลับ 3–5 โพสต์ + Auto-Loop 24 ชม.</li>
                             <li>✓ สุ่มหน่วงเวลา 35–85 วิ ป้องกันแบน</li>
                             <li>✓ รันบนคลาวด์ ปิดหน้าจอมือถือได้ทันที</li>
                         </ul>
@@ -732,7 +737,7 @@
                         <div class="price-per-day">เฉลี่ยเพียง 29 บาท / วัน (ประหยัด 29%)</div>
                         <ul class="price-features">
                             <li>✓ ใช้งานเต็มระบบ 30 วัน (1 บัญชี)</li>
-                            <li>✓ โหมด Auto-Loop วนยิงซ้ำ 24 ชม.</li>
+                            <li>✓ สุ่มสลับ 3–5 โพสต์ + Auto-Loop 24 ชม.</li>
                             <li>✓ ยิงโพสต์ตาราง/รูปภาพ/อิโมจิพรีเมียมครบ</li>
                             <li>✓ ดูแลช่วยเหลือตลอดอายุการใช้งาน</li>
                         </ul>
@@ -748,7 +753,7 @@
                         <div class="price-per-day">เฉลี่ยเพียง 24 บาท / วัน (ประหยัด 480 ฿)</div>
                         <ul class="price-features">
                             <li>✓ ใช้งานเต็มระบบยาว 90 วัน (1 บัญชี)</li>
-                            <li>✓ โหมด Auto-Loop วนยิงซ้ำ 24 ชม.</li>
+                            <li>✓ สุ่มสลับ 3–5 โพสต์ + Auto-Loop 24 ชม.</li>
                             <li>✓ แจ้งเปลี่ยนเบอร์ Telegram ฟรีตลอดอายุ</li>
                             <li>✓ ซัพพอร์ตคิวด่วนพิเศษจากผู้ดูแล</li>
                         </ul>
@@ -785,15 +790,15 @@
             <div class="card-header">
                 <div>
                     <h3 style="font-size: 18px; font-weight: 700;">✍️ จัดการโพสต์ต้นฉบับ (Saved Messages)</h3>
-                    <p style="font-size: 12px; color: var(--text-muted);">ระบบจะดึงโพสต์ล่าสุดในห้อง Saved Messages ของ Telegram ไปยิงเข้าทุกกลุ่มที่เลือก</p>
+                    <p style="font-size: 12px; color: var(--text-muted);">ระบบจะดึงโพสต์ล่าสุดตามโหมดที่เลือก (1, 3 หรือ 5 โพสต์ล่าสุด) มาแสดงพรีวิว</p>
                 </div>
                 <button onclick="loadSavedMessagePreview()" class="btn-primary">🔄 ดึงพรีวิวโพสต์ล่าสุด</button>
             </div>
             <div style="background: rgba(16, 185, 129, 0.14); border: 1px solid rgba(16, 185, 129, 0.35); color: #10b981; padding: 10px 14px; border-radius: 12px; font-size: 12px; margin-bottom: 12px; font-weight: 600;">
-                ✅ ระบบจะส่งโพสต์ล่าสุดจาก Saved Messages เข้ากลุ่มโดยรักษาตาราง ฟอนต์พิเศษ และอิโมจิพรีเมียมครบถ้วน 100%
+                ✅ ระบบจะส่งโพสต์จาก Saved Messages เข้ากลุ่มโดยรักษาตาราง ฟอนต์พิเศษ และอิโมจิพรีเมียมครบถ้วน 100%
             </div>
             <div id="savedMsgBox" class="saved-msg-preview-box">
-                กดปุ่ม "🔄 ดึงพรีวิวโพสต์ล่าสุด" เพื่อตรวจสอบข้อความล่าสุดที่จะส่ง
+                กดปุ่ม "🔄 ดึงพรีวิวโพสต์ล่าสุด" เพื่อตรวจสอบข้อความที่จะส่ง
             </div>
         </section>
 
@@ -844,7 +849,7 @@
             <div class="card-header">
                 <div>
                     <h3 style="font-size: 18px; font-weight: 700;">⚡ สถานะคิวการส่งสด (Live Queue & Auto-Loop)</h3>
-                    <p style="font-size: 12px; color: var(--text-muted);">หากเปิด Auto-Loop ไว้ เมื่อยิงครบทุกกลุ่มระบบจะนับถอยหลังและเริ่มรอบใหม่อัตโนมัติ</p>
+                    <p style="font-size: 12px; color: var(--text-muted);">ระบบจะสุ่มสลับโพสต์และสุ่มเวลาพักอัตโนมัติในแต่ละรอบ</p>
                 </div>
                 <div style="display: flex; gap: 8px; flex-wrap: wrap; width: 100%; justify-content: flex-end;">
                     <button onclick="resetQueueProgress()" class="btn-reset-queue">🔄 รีเซ็ตคิวเริ่มนับ 1 ใหม่</button>
@@ -936,30 +941,24 @@
         let tutTimers = [];
         let currentTutStep = 0;
 
-        // ================= OPEN TELEGRAM CHAT DIRECTLY =================
         function openSellerTelegram(packageName) {
             const uname = currentUser && currentUser.email ? currentUser.email.split('@')[0] : '';
-            const msgText = uname
-                ? `สวัสดีครับ สนใจ${packageName} (Username: ${uname})`
-                : `สวัสดีครับ สนใจ${packageName}`;
+            const msgText = uname ? `สวัสดีครับ สนใจ${packageName} (Username: ${uname})` : `สวัสดีครับ สนใจ${packageName}`;
             const encodedText = encodeURIComponent(msgText);
-
             window.location.href = `tg://resolve?domain=huimin168&text=${encodedText}`;
-
-            setTimeout(() => {
-                window.open(`https://t.me/huimin168?text=${encodedText}`, '_blank');
-            }, 600);
+            setTimeout(() => window.open(`https://t.me/huimin168?text=${encodedText}`, '_blank'), 600);
         }
 
-        // ================= AUTO-LOOP SETTINGS =================
-        function getSavedLoopHours() {
-            return parseInt(localStorage.getItem('teleauto_loop_hours') || '0', 10);
-        }
+        function getSavedLoopHours() { return parseInt(localStorage.getItem('teleauto_loop_hours') || '0', 10); }
+        function getSavedRotateCount() { return parseInt(localStorage.getItem('teleauto_rotate_count') || '1', 10); }
 
         function initAutoLoopUI() {
             const hours = getSavedLoopHours();
+            const rotCount = getSavedRotateCount();
             const sel = document.getElementById('autoLoopSelect');
+            const rotSel = document.getElementById('postRotateSelect');
             if (sel) sel.value = hours.toString();
+            if (rotSel) rotSel.value = rotCount.toString();
             updateAutoLoopPill(hours, 0, 1);
         }
 
@@ -972,11 +971,11 @@
                 pill.classList.add('active-loop');
                 if (nextCycleSeconds > 0) {
                     const mins = Math.ceil(nextCycleSeconds / 60);
-                    pill.innerText = `🔁 เปิดวนลูปทุก ${loopHours} ชม. (เริ่มรอบถัดไปใน ~${mins} นาที)`;
+                    pill.innerText = `🔁 วนลูปทุก ~${loopHours} ชม. (เริ่มรอบถัดไปใน ~${mins} นาที)`;
                 } else {
-                    pill.innerText = `🔁 เปิดวนลูปทุก ${loopHours} ชม. (รอบที่ ${cycleCount || 1})`;
+                    pill.innerText = `🔁 วนลูปทุก ~${loopHours} ชม. (รอบที่ ${cycleCount || 1})`;
                 }
-                if (qBadge) qBadge.innerText = `🔁 Auto-Loop: ทุก ${loopHours} ชม. (รอบที่ ${cycleCount || 1})`;
+                if (qBadge) qBadge.innerText = `🔁 Auto-Loop: ทุก ~${loopHours} ชม. (รอบที่ ${cycleCount || 1})`;
             } else {
                 pill.classList.remove('active-loop');
                 pill.innerText = 'สถานะ: ยิงรอบเดียว (ปิดวนลูป)';
@@ -984,30 +983,28 @@
             }
         }
 
+        async function onPostRotateChange(val) {
+            const count = [1, 3, 5].includes(parseInt(val, 10)) ? parseInt(val, 10) : 1;
+            localStorage.setItem('teleauto_rotate_count', count.toString());
+            try {
+                const headers = await getAuthHeader();
+                await fetch(`${BACKEND_URL}/api/rotation/config`, { method: 'POST', headers, body: JSON.stringify({ rotateCount: count }) });
+            } catch (e) {}
+        }
+
         async function onAutoLoopChange(val) {
             const hours = parseInt(val, 10) || 0;
             localStorage.setItem('teleauto_loop_hours', hours.toString());
             updateAutoLoopPill(hours, 0, 1);
-
             try {
                 const headers = await getAuthHeader();
-                await fetch(`${BACKEND_URL}/api/loop/config`, {
-                    method: 'POST',
-                    headers,
-                    body: JSON.stringify({ loopHours: hours })
-                });
+                await fetch(`${BACKEND_URL}/api/loop/config`, { method: 'POST', headers, body: JSON.stringify({ loopHours: hours }) });
             } catch (e) {}
         }
 
-        // ================= DARK / LIGHT THEME LOGIC =================
         function applySavedTheme() {
-            const saved = localStorage.getItem('teleauto_theme') || 'light';
-            const isDark = saved === 'dark';
-            if (isDark) {
-                document.body.classList.add('dark-theme');
-            } else {
-                document.body.classList.remove('dark-theme');
-            }
+            const isDark = (localStorage.getItem('teleauto_theme') || 'light') === 'dark';
+            document.body.classList.toggle('dark-theme', isDark);
             updateThemeButtons(isDark);
         }
 
@@ -1028,56 +1025,36 @@
 
         applySavedTheme();
 
-        // ================= RIPPLE & CLICK GLOW EFFECT =================
         document.addEventListener('pointerdown', function (e) {
             const target = e.target.closest('button, .banner-cta-btn, .price-btn, .owner-contact-link, .btn-contact-admin-urgent');
             if (!target || target.disabled) return;
-
             const rect = target.getBoundingClientRect();
             const size = Math.max(rect.width, rect.height);
-            const x = e.clientX - rect.left - size / 2;
-            const y = e.clientY - rect.top - size / 2;
-
             const ripple = document.createElement('span');
-            const isLightBg = target.classList.contains('nav-item') ||
-                              target.classList.contains('tool-btn') ||
-                              target.classList.contains('btn-logout') ||
-                              target.classList.contains('btn-copy-user') ||
-                              target.classList.contains('btn-theme-toggle') ||
-                              target.classList.contains('btn-replay-demo');
-
+            const isLightBg = ['nav-item', 'tool-btn', 'btn-logout', 'btn-copy-user', 'btn-theme-toggle', 'btn-replay-demo'].some(c => target.classList.contains(c));
             ripple.className = isLightBg ? 'ripple-wave dark-ripple' : 'ripple-wave';
             ripple.style.width = `${size}px`;
             ripple.style.height = `${size}px`;
-            ripple.style.left = `${x}px`;
-            ripple.style.top = `${y}px`;
-
+            ripple.style.left = `${e.clientX - rect.left - size / 2}px`;
+            ripple.style.top = `${e.clientY - rect.top - size / 2}px`;
             target.appendChild(ripple);
             ripple.addEventListener('animationend', () => ripple.remove());
         });
 
-        // ================= INTRO PROMO VIDEO LOGIC =================
         const scenesData = [
             { badge: '⚡ TELEAUTO PRO • CLOUD BOT', headline: 'เบื่อไหม? นั่งส่งโพสต์เข้ากลุ่มเองทีละห้องจนมือหงิก!', duration: 3200 },
             { badge: '📱 ใช้งานผ่านมือถือ 100%', headline: 'เลือกกลุ่มเป้าหมาย แล้วกด RUN ปุ่มเดียวจบ!', duration: 3600 },
-            { badge: '🔁 AUTO-LOOP 24 ชม. • หน่วง 35–85 วิ', headline: 'รันบนคลาวด์วนยิงซ้ำ 24 ชม. ปิดจอนอนได้เลย!', duration: 3600 },
+            { badge: '🎲 สุ่มสลับ 3–5 โพสต์ • AUTO-LOOP', headline: 'สุ่มสลับข้อความ + สุ่มเวลาพัก เนียนเหมือนคนโพสต์!', duration: 3600 },
             { badge: '🔥 ตารางเป๊ะ • อิโมจิครบ', headline: 'เด้งเข้ากลุ่มจริง! ตารางสวย อิโมจิพรีเมียมครบ 100%', duration: 3800 }
         ];
 
-        function clearIntroTimers() {
-            introTimers.forEach(t => clearTimeout(t));
-            introTimers = [];
-        }
+        function clearIntroTimers() { introTimers.forEach(t => clearTimeout(t)); introTimers = []; }
 
         function startIntroOnce() {
             clearIntroTimers();
             document.getElementById('introOverlay').style.display = 'flex';
             document.getElementById('authOverlay').style.display = 'none';
-
-            document.querySelectorAll('.p-fill').forEach(el => {
-                el.style.transition = 'none';
-                el.style.width = '0%';
-            });
+            document.querySelectorAll('.p-fill').forEach(el => { el.style.transition = 'none'; el.style.width = '0%'; });
             document.getElementById('cursorTap').classList.remove('show');
             const runBtn = document.getElementById('simRunBtn');
             runBtn.classList.remove('clicked');
@@ -1087,12 +1064,11 @@
 
             let elapsed = 0;
             scenesData.forEach((sc, idx) => {
-                const t = setTimeout(() => {
+                introTimers.push(setTimeout(() => {
                     document.querySelectorAll('.scene').forEach(s => s.classList.remove('active'));
                     document.getElementById(`scene${idx}`).classList.add('active');
                     document.getElementById('topBadge').innerText = sc.badge;
                     document.getElementById('headlineText').innerText = sc.headline;
-
                     const bar = document.getElementById(`pf${idx}`);
                     bar.style.transition = `width ${sc.duration}ms linear`;
                     bar.style.width = '100%';
@@ -1100,12 +1076,8 @@
                     if (idx === 1) {
                         introTimers.push(setTimeout(() => document.getElementById('cursorTap').classList.add('show'), 900));
                         introTimers.push(setTimeout(() => runBtn.classList.add('clicked'), 1350));
-                        introTimers.push(setTimeout(() => {
-                            runBtn.classList.remove('clicked');
-                            runBtn.innerText = '⏳ กำลังรันคิว...';
-                        }, 1600));
+                        introTimers.push(setTimeout(() => { runBtn.classList.remove('clicked'); runBtn.innerText = '⏳ กำลังรันคิว...'; }, 1600));
                     }
-
                     if (idx === 2) {
                         introTimers.push(setTimeout(() => {
                             document.getElementById('simSentCount').innerText = '2';
@@ -1116,12 +1088,9 @@
                             document.getElementById('simLogList').innerHTML += `<div class="log-row-sim"><span>✅ กลุ่มโปรโมทร้านค้า & รีวิวสินค้า</span><span>สำเร็จ</span></div>`;
                         }, 2200));
                     }
-                }, elapsed);
-
-                introTimers.push(t);
+                }, elapsed));
                 elapsed += sc.duration;
             });
-
             introTimers.push(setTimeout(() => finishIntroToAuth(), elapsed + 300));
         }
 
@@ -1132,17 +1101,14 @@
             document.getElementById('authOverlay').style.display = 'flex';
         }
 
-        function replayIntroVideo() {
-            startIntroOnce();
-        }
+        function replayIntroVideo() { startIntroOnce(); }
 
-        // ================= IN-APP TUTORIAL VIDEO PLAYER LOGIC =================
         const tutorialSteps = [
             {
                 badge: 'ขั้นตอนที่ 1 / 4 • เตรียมโพสต์',
-                title: 'ส่งโพสต์ตารางไว้ใน Saved Messages',
+                title: 'ส่งโพสต์ตารางไว้ใน Saved Messages (3–5 โพสต์)',
                 duration: 5000,
-                html: `<div><div class="tg-header">🔖 Telegram > Saved Messages</div><div class="tg-bubble"><div style="font-weight: 800; color: #1e40af; margin-bottom: 4px;">✨ รายการสินค้าร้านค้า ✨</div><div class="tg-quote-table"><strong>สินค้า A</strong> | เกรดพรีเมียม | <strong>2,000.-</strong><br><strong>สินค้า B</strong> | ชุดเซ็ตครบ | <strong>1,500.-</strong></div><div>💎 อิโมจิพรีเมียม + ตารางจัดเต็ม</div></div></div><div style="background: #fef3c7; color: #92400e; padding: 8px; border-radius: 10px; font-size: 11px; font-weight: 700; text-align: center;">💡 ทริค: กดจุดสามจุด ⋮ ใน Saved Messages > เลือก "ดูเป็นข้อความ (View as Messages)" แล้วกดดึงพรีวิวในเว็บ</div>`
+                html: `<div><div class="tg-header">🔖 Telegram > Saved Messages</div><div class="tg-bubble"><div style="font-weight: 800; color: #1e40af; margin-bottom: 4px;">✨ รายการสินค้าร้านค้า ✨</div><div class="tg-quote-table"><strong>สินค้า A</strong> | เกรดพรีเมียม | <strong>2,000.-</strong><br><strong>สินค้า B</strong> | ชุดเซ็ตครบ | <strong>1,500.-</strong></div><div>💎 อิโมจิพรีเมียม + ตารางจัดเต็ม</div></div></div><div style="background: #fef3c7; color: #92400e; padding: 8px; border-radius: 10px; font-size: 11px; font-weight: 700; text-align: center;">💡 ทริค: ส่งไว้ 3–5 โพสต์ที่ต่างกันเล็กน้อย แล้วเลือกโหมด "🎲 สุ่มสลับ 3/5 โพสต์"</div>`
             },
             {
                 badge: 'ขั้นตอนที่ 2 / 4 • เชื่อมต่อบัญชี',
@@ -1157,71 +1123,44 @@
                 html: `<div><div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;"><span style="font-weight: 800; font-size: 12.5px;">📁 ล็อกกลุ่มของฉัน</span><span style="background: #f3e8ff; color: #9333ea; padding: 2px 8px; border-radius: 10px; font-size: 10.5px; font-weight: 700;">เลือกไว้ 62 กลุ่ม</span></div><div class="group-item-sim">☑️ กลุ่มซื้อขายสินค้าออนไลน์ 24 ชม.</div><div class="group-item-sim">☑️ ตลาดนัดแม่ค้าออนไลน์ (45K)</div><div class="group-item-sim">☑️ กลุ่มโปรโมทร้านค้า & รีวิวสินค้า</div><div class="group-item-sim" style="opacity: 0.5;">⬜ กลุ่มพูดคุยทั่วไป (ไม่เลือก)</div></div><div style="background: #f3e8ff; color: #7e22ce; padding: 8px; border-radius: 10px; font-size: 11px; font-weight: 700; text-align: center;">🎯 บอทจะยิงเฉพาะกลุ่มที่มีเครื่องหมายติ๊กถูกสีฟ้าเท่านั้น</div>`
             },
             {
-                badge: 'ขั้นตอนที่ 4 / 4 • Auto-Loop 24 ชม.',
-                title: 'เลือกรอบวนยิงซ้ำ แล้วกด ▶ RUN ปิดจอนอนได้เลย!',
+                badge: 'ขั้นตอนที่ 4 / 4 • Smart Anti-Ban 24 ชม.',
+                title: 'กด ▶ RUN ยิงโพสต์ แล้วปิดจอนอนได้เลย!',
                 duration: 5500,
-                html: `<div><div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;"><span style="font-weight: 800; font-size: 12.5px; color: #059669;">🔁 วนยิงซ้ำทุก 2 ชม.</span><span style="background: #9333ea; color: #fff; padding: 4px 10px; border-radius: 8px; font-size: 11px; font-weight: 700;">▶ RUN ยิงโพสต์</span></div><div class="log-row-sim"><span>✅ ตลาดนัดแม่ค้าออนไลน์</span><span>สำเร็จ</span></div><div class="log-row-sim"><span>✅ กลุ่มซื้อขายสินค้า 24 ชม.</span><span>สำเร็จ</span></div><div style="background: #fffbeb; border: 1px solid #fde68a; color: #b45309; padding: 8px; border-radius: 10px; font-size: 11px; font-weight: 700; margin-top: 6px; text-align: center;">⏳ สุ่มหน่วงเวลารอบถัดไป 48 วิ • ยิงครบแล้ววนซ้ำอัตโนมัติ</div></div><div style="background: #ecfdf5; color: #065f46; padding: 8px; border-radius: 10px; font-size: 11px; font-weight: 700; text-align: center;">🎉 ตาราง + อิโมจิพรีเมียมเข้ากลุ่มครบ 100% ปิดจอมือถือได้ทันที!</div>`
+                html: `<div><div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;"><span style="font-weight: 800; font-size: 12.5px; color: #059669;">🎲 สุ่มสลับ 3 โพสต์</span><span style="background: #9333ea; color: #fff; padding: 4px 10px; border-radius: 8px; font-size: 11px; font-weight: 700;">▶ RUN ยิงโพสต์</span></div><div class="log-row-sim"><span>✅ ตลาดนัดแม่ค้า (ชุดที่ 2/3)</span><span>สำเร็จ</span></div><div class="log-row-sim"><span>✅ กลุ่มซื้อขาย 24 ชม. (ชุดที่ 1/3)</span><span>สำเร็จ</span></div><div style="background: #fffbeb; border: 1px solid #fde68a; color: #b45309; padding: 8px; border-radius: 10px; font-size: 11px; font-weight: 700; margin-top: 6px; text-align: center;">⏳ สุ่มหน่วงเวลา 48 วิ • ยิงครบแล้วสุ่มเวลาพักวนซ้ำอัตโนมัติ</div></div><div style="background: #ecfdf5; color: #065f46; padding: 8px; border-radius: 10px; font-size: 11px; font-weight: 700; text-align: center;">🎉 ตาราง + อิโมจิพรีเมียมเข้ากลุ่มครบ 100% ปิดจอมือถือได้ทันที!</div>`
             }
         ];
 
-        function clearTutTimers() {
-            tutTimers.forEach(t => clearTimeout(t));
-            tutTimers = [];
-        }
+        function clearTutTimers() { tutTimers.forEach(t => clearTimeout(t)); tutTimers = []; }
 
         function playTutorialSequence(startIndex = 0) {
             clearTutTimers();
             let elapsed = 0;
-
             for (let i = 0; i < tutorialSteps.length; i++) {
                 const bar = document.getElementById(`tpf${i}`);
-                if (bar) {
-                    bar.style.transition = 'none';
-                    bar.style.width = i < startIndex ? '100%' : '0%';
-                }
+                if (bar) { bar.style.transition = 'none'; bar.style.width = i < startIndex ? '100%' : '0%'; }
             }
-
             for (let idx = startIndex; idx < tutorialSteps.length; idx++) {
                 const step = tutorialSteps[idx];
-                const t = setTimeout(() => {
+                tutTimers.push(setTimeout(() => {
                     currentTutStep = idx;
                     document.getElementById('tutBadge').innerText = step.badge;
                     document.getElementById('tutTitle').innerText = step.title;
                     document.getElementById('tutScreenContent').innerHTML = step.html;
-
-                    document.querySelectorAll('.tut-step-card').forEach((card, cIdx) => {
-                        if (cIdx === idx) card.classList.add('active-step');
-                        else card.classList.remove('active-step');
-                    });
-
+                    document.querySelectorAll('.tut-step-card').forEach((card, cIdx) => card.classList.toggle('active-step', cIdx === idx));
                     const bar = document.getElementById(`tpf${idx}`);
-                    if (bar) {
-                        bar.style.transition = `width ${step.duration}ms linear`;
-                        bar.style.width = '100%';
-                    }
-                }, elapsed);
-
-                tutTimers.push(t);
+                    if (bar) { bar.style.transition = `width ${step.duration}ms linear`; bar.style.width = '100%'; }
+                }, elapsed));
                 elapsed += step.duration;
             }
         }
 
-        function prevTutorialStep() {
-            const prev = currentTutStep > 0 ? currentTutStep - 1 : 0;
-            playTutorialSequence(prev);
-        }
+        function prevTutorialStep() { playTutorialSequence(currentTutStep > 0 ? currentTutStep - 1 : 0); }
+        function nextTutorialStep() { playTutorialSequence(currentTutStep < tutorialSteps.length - 1 ? currentTutStep + 1 : 0); }
 
-        function nextTutorialStep() {
-            const next = currentTutStep < tutorialSteps.length - 1 ? currentTutStep + 1 : 0;
-            playTutorialSequence(next);
-        }
-
-        // ================= APP & AUTH LOGIC =================
         function sanitizeUsernameInput(inputEl) {
             let val = inputEl.value.toLowerCase();
             if (val.endsWith('@teleauto.app')) val = val.replace('@teleauto.app', '');
-            val = val.replace(/[^a-z0-9._-]/g, '');
-            inputEl.value = val;
+            inputEl.value = val.replace(/[^a-z0-9._-]/g, '');
         }
 
         function switchPage(page) {
@@ -1229,8 +1168,7 @@
             const activeBtn = document.getElementById(`nav-${page}`);
             if (activeBtn) activeBtn.classList.add('active');
 
-            const sections = ['sec-banner', 'sec-tutorial', 'sec-posts', 'sec-accounts', 'sec-groups', 'sec-queue', 'sec-pricing', 'sec-password', 'sec-admin'];
-            sections.forEach(id => {
+            ['sec-banner', 'sec-tutorial', 'sec-posts', 'sec-accounts', 'sec-groups', 'sec-queue', 'sec-pricing', 'sec-password', 'sec-admin'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.style.display = 'none';
             });
@@ -1262,7 +1200,6 @@
                 document.getElementById('sec-admin').style.display = 'block';
                 loadAdminUsers();
             }
-
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
@@ -1275,34 +1212,19 @@
                 await Promise.all([loadUserLicense(), loadUserAccounts(), loadUserGroups(), fetchQueueStatus()]);
                 startStatusPolling();
             } else {
-                if (!sessionStorage.getItem('teleauto_intro_seen')) {
-                    startIntroOnce();
-                } else {
-                    showAuthUI();
-                }
+                if (!sessionStorage.getItem('teleauto_intro_seen')) startIntroOnce();
+                else showAuthUI();
             }
         }
 
         function switchAuthTab(mode) {
             authMode = mode;
-            const tabLogin = document.getElementById('tabLogin');
-            const tabRegister = document.getElementById('tabRegister');
-            const authSubmitBtn = document.getElementById('authSubmitBtn');
-            const authErrorMsg = document.getElementById('authErrorMsg');
-            const registerOwnerNotice = document.getElementById('registerOwnerNotice');
-            authErrorMsg.style.display = 'none';
-
-            if (mode === 'login') {
-                tabLogin.classList.add('active');
-                tabRegister.classList.remove('active');
-                registerOwnerNotice.style.display = 'none';
-                authSubmitBtn.innerText = 'เข้าสู่ระบบ';
-            } else {
-                tabRegister.classList.add('active');
-                tabLogin.classList.remove('active');
-                registerOwnerNotice.style.display = 'block';
-                authSubmitBtn.innerText = 'สมัครสมาชิก (ติดต่อ @huimin168 เพื่อขออนุมัติฟรี 3 วัน)';
-            }
+            const isLogin = mode === 'login';
+            document.getElementById('tabLogin').classList.toggle('active', isLogin);
+            document.getElementById('tabRegister').classList.toggle('active', !isLogin);
+            document.getElementById('registerOwnerNotice').style.display = isLogin ? 'none' : 'block';
+            document.getElementById('authErrorMsg').style.display = 'none';
+            document.getElementById('authSubmitBtn').innerText = isLogin ? 'เข้าสู่ระบบ' : 'สมัครสมาชิก (ติดต่อ @huimin168 เพื่อขออนุมัติฟรี 3 วัน)';
         }
 
         async function handleAuth(event) {
@@ -1311,20 +1233,10 @@
             const password = document.getElementById('authPassword').value.trim();
             const authErrorMsg = document.getElementById('authErrorMsg');
             const authSubmitBtn = document.getElementById('authSubmitBtn');
-
             authErrorMsg.style.display = 'none';
 
-            if (!rawUsername || rawUsername.length < 3) {
-                authErrorMsg.innerText = 'กรุณากรอกชื่อผู้ใช้งานภาษาอังกฤษหรือตัวเลขอย่างน้อย 3 ตัวอักษร';
-                authErrorMsg.style.display = 'block';
-                return;
-            }
-
-            if (password.length < 6) {
-                authErrorMsg.innerText = 'กรุณากรอกรหัสผ่านอย่างน้อย 6 ตัวอักษร';
-                authErrorMsg.style.display = 'block';
-                return;
-            }
+            if (!rawUsername || rawUsername.length < 3) { authErrorMsg.innerText = 'กรุณากรอกชื่อผู้ใช้งานภาษาอังกฤษหรือตัวเลขอย่างน้อย 3 ตัวอักษร'; authErrorMsg.style.display = 'block'; return; }
+            if (password.length < 6) { authErrorMsg.innerText = 'กรุณากรอกรหัสผ่านอย่างน้อย 6 ตัวอักษร'; authErrorMsg.style.display = 'block'; return; }
 
             const internalEmail = `${rawUsername}@teleauto.app`;
             authSubmitBtn.disabled = true;
@@ -1333,18 +1245,12 @@
             try {
                 if (authMode === 'login') {
                     const { data, error } = await supabaseClient.auth.signInWithPassword({ email: internalEmail, password });
-                    if (error) {
-                        if (error.message.includes('Email not confirmed')) throw new Error('ระบบยังติดยืนยันอีเมล กรุณาแจ้งผู้ดูแลให้ปิด Confirm email ใน Supabase');
-                        throw new Error('ชื่อผู้ใช้งานหรือรหัสผ่านไม่ถูกต้อง กรุณาตรวจสอบตัวสะกดอีกครั้ง');
-                    }
+                    if (error) throw new Error(error.message.includes('Email not confirmed') ? 'ระบบยังติดยืนยันอีเมล กรุณาแจ้งผู้ดูแล' : 'ชื่อผู้ใช้งานหรือรหัสผ่านไม่ถูกต้อง');
                     currentUser = data.user;
                 } else {
                     const { data, error } = await supabaseClient.auth.signUp({ email: internalEmail, password });
-                    if (error) {
-                        if (error.message.includes('already registered')) throw new Error(`ชื่อผู้ใช้ "${rawUsername}" มีคนใช้งานแล้ว กรุณาตั้งชื่ออื่นหรือกดแท็บเข้าสู่ระบบ`);
-                        throw error;
-                    }
-                    if (!data.session) throw new Error('สมัครสมาชิกสำเร็จแล้ว แต่ผู้ดูแลยังไม่ได้ปิด Confirm email ใน Supabase กรุณาแจ้ง @huimin168');
+                    if (error) throw new Error(error.message.includes('already registered') ? `ชื่อผู้ใช้ "${rawUsername}" มีคนใช้งานแล้ว` : error.message);
+                    if (!data.session) throw new Error('สมัครสมาชิกสำเร็จแล้ว กรุณาแจ้ง @huimin168 เพื่อเปิดสิทธิ์');
                     currentUser = data.user;
                     alert(`สมัครสมาชิกชื่อ "${rawUsername}" เรียบร้อยแล้ว!\n\n⚠️ บัญชีของคุณอยู่ในสถานะ "รออนุมัติ" กรุณาทักแชทผู้ดูแล @huimin168 เพื่อขออนุมัติแพ็กเกจฟรี 3 วันก่อนจึงจะเริ่มใช้งานได้ครับ`);
                 }
@@ -1390,9 +1296,7 @@
         function copyPendingUsername() {
             if (!currentUser) return;
             const uname = currentUser.email.split('@')[0];
-            navigator.clipboard.writeText(uname).then(() => {
-                alert(`คัดลอกชื่อผู้ใช้ "${uname}" เรียบร้อยแล้ว! ส่งให้ผู้ดูแล @huimin168 เพื่อเปิดสิทธิ์ฟรี 3 วันได้เลยครับ`);
-            }).catch(() => alert(`ชื่อผู้ใช้ของคุณคือ: ${uname}`));
+            navigator.clipboard.writeText(uname).then(() => alert(`คัดลอกชื่อผู้ใช้ "${uname}" เรียบร้อยแล้ว! ส่งให้ผู้ดูแล @huimin168 ได้เลยครับ`)).catch(() => alert(`ชื่อผู้ใช้ของคุณคือ: ${uname}`));
         }
 
         async function getAuthHeader() {
@@ -1414,9 +1318,7 @@
                 const headers = await getAuthHeader();
                 const res = await fetch(`${BACKEND_URL}/api/license/status`, { headers });
                 const result = await res.json();
-
                 adminNav.style.display = result.isAdmin ? 'flex' : 'none';
-
                 if (result.valid && result.expireDate) {
                     hasActiveLicense = true;
                     pendingBox.style.display = 'none';
@@ -1434,54 +1336,37 @@
             }
         }
 
-        // ================= PASSWORD MANAGEMENT =================
         async function handleChangeOwnPassword(event) {
             event.preventDefault();
             const newPass = document.getElementById('newOwnPassword').value.trim();
             const confirmPass = document.getElementById('confirmOwnPassword').value.trim();
             const btn = document.getElementById('btnChangeOwnPass');
-
             if (newPass.length < 6) return alert('รหัสผ่านใหม่ต้องมีอย่างน้อย 6 ตัวอักษร');
-            if (newPass !== confirmPass) return alert('รหัสผ่านใหม่ทั้ง 2 ช่องไม่ตรงกัน กรุณาตรวจสอบอีกครั้ง');
-
-            btn.disabled = true;
-            btn.innerText = 'กำลังบันทึก...';
-
+            if (newPass !== confirmPass) return alert('รหัสผ่านใหม่ทั้ง 2 ช่องไม่ตรงกัน');
+            btn.disabled = true; btn.innerText = 'กำลังบันทึก...';
             try {
                 const { error } = await supabaseClient.auth.updateUser({ password: newPass });
                 if (error) throw error;
-                alert('✅ เปลี่ยนรหัสผ่านเรียบร้อยแล้ว! กรุณาใช้รหัสผ่านใหม่ในการเข้าสู่ระบบครั้งถัดไป');
+                alert('✅ เปลี่ยนรหัสผ่านเรียบร้อยแล้ว!');
                 document.getElementById('newOwnPassword').value = '';
                 document.getElementById('confirmOwnPassword').value = '';
-            } catch (e) {
-                alert('เกิดข้อผิดพลาด: ' + e.message);
-            } finally {
-                btn.disabled = false;
-                btn.innerText = '💾 บันทึกรหัสผ่านใหม่';
-            }
+            } catch (e) { alert('เกิดข้อผิดพลาด: ' + e.message); }
+            finally { btn.disabled = false; btn.innerText = '💾 บันทึกรหัสผ่านใหม่'; }
         }
 
         async function adminResetPassword(targetUserId, username) {
             const newPassword = prompt(`ตั้งรหัสผ่านใหม่ให้กับสมาชิก "${username}" (อย่างน้อย 6 ตัวอักษร):`);
             if (!newPassword) return;
             if (newPassword.trim().length < 6) return alert('รหัสผ่านใหม่ต้องมีอย่างน้อย 6 ตัวอักษร');
-
             try {
                 const headers = await getAuthHeader();
-                const res = await fetch(`${BACKEND_URL}/api/admin/reset-password`, {
-                    method: 'POST',
-                    headers,
-                    body: JSON.stringify({ targetUserId, newPassword: newPassword.trim() })
-                });
+                const res = await fetch(`${BACKEND_URL}/api/admin/reset-password`, { method: 'POST', headers, body: JSON.stringify({ targetUserId, newPassword: newPassword.trim() }) });
                 const result = await res.json();
                 if (!result.success) throw new Error(result.error);
                 alert(`✅ เปลี่ยนรหัสผ่านให้ "${username}" เป็น "${newPassword.trim()}" เรียบร้อยแล้ว!`);
-            } catch (e) {
-                alert('เกิดข้อผิดพลาด: ' + e.message);
-            }
+            } catch (e) { alert('เกิดข้อผิดพลาด: ' + e.message); }
         }
 
-        // ================= ADMIN FUNCTIONS =================
         async function loadAdminUsers() {
             const tbody = document.getElementById('adminUsersTableBody');
             tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 24px;">กำลังโหลดรายชื่อสมาชิก...</td></tr>`;
@@ -1492,123 +1377,79 @@
                 if (!result.success) throw new Error(result.error);
                 adminUsersCache = result.users || [];
                 renderAdminUsers(adminUsersCache);
-            } catch (e) {
-                tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #ef4444; padding: 24px;">เกิดข้อผิดพลาด: ${e.message}</td></tr>`;
-            }
+            } catch (e) { tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #ef4444; padding: 24px;">เกิดข้อผิดพลาด: ${e.message}</td></tr>`; }
         }
 
         function renderAdminUsers(users) {
             const tbody = document.getElementById('adminUsersTableBody');
-            if (!users || users.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 24px;">ไม่พบรายชื่อสมาชิก</td></tr>`;
-                return;
-            }
-
+            if (!users || users.length === 0) { tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 24px;">ไม่พบรายชื่อสมาชิก</td></tr>`; return; }
             tbody.innerHTML = users.map(u => {
                 const now = new Date();
                 const expDate = u.expire_at ? new Date(u.expire_at) : null;
                 const isValid = u.is_active && expDate && expDate > now;
                 const expText = expDate ? `${expDate.getDate()}/${expDate.getMonth()+1}/${expDate.getFullYear()+543} ${expDate.toLocaleTimeString('th-TH', {hour:'2-digit', minute:'2-digit'})}` : '-';
                 const tgInfo = u.tg_phone ? `${u.tg_name || ''} (${u.tg_phone})` : '<span style="color:var(--text-muted);">ยังไม่ผูกเบอร์</span>';
-
-                return `
-                    <tr>
-                        <td translate="no" style="font-weight: 700;">${u.username}</td>
-                        <td translate="no" style="font-size: 12px;">${tgInfo}</td>
-                        <td><span class="${isValid ? 'status-badge-ok' : 'status-badge-err'}">${isValid ? (u.plan_type || 'VIP ใช้งานได้') : 'รออนุมัติ / หมดอายุ'}</span></td>
-                        <td style="font-size: 12px; color: var(--text-muted); white-space: nowrap;">${isValid ? expText : '-'}</td>
-                        <td>
-                            <div class="admin-btn-group">
-                                <button class="btn-grant" style="background: #f3e8ff; color: #7e22ce;" onclick="adminGrantDays('${u.id}', '${u.username}', 3, 'TRIAL_3D')">+3 วัน</button>
-                                <button class="btn-grant" style="background: #e0f2fe; color: #0369a1;" onclick="adminGrantDays('${u.id}', '${u.username}', 7, 'STARTER_7D')">+7 วัน</button>
-                                <button class="btn-grant" style="background: #dcfce7; color: #15803d;" onclick="adminGrantDays('${u.id}', '${u.username}', 30, 'PRO_30D')">+30 วัน</button>
-                                <button class="btn-grant" style="background: #fef3c7; color: #b45309;" onclick="adminGrantDays('${u.id}', '${u.username}', 90, 'VIP_90D')">+90 วัน</button>
-                                <button class="btn-grant" style="background: #fee2e2; color: #b91c1c;" onclick="adminRevokeUser('${u.id}', '${u.username}')">ระงับ</button>
-                                <button class="btn-grant" style="background: #e2e8f0; color: #1e293b;" onclick="adminResetPassword('${u.id}', '${u.username}')">🔑 รีเซ็ตรหัส</button>
-                            </div>
-                        </td>
-                    </tr>
-                `;
+                return `<tr>
+                    <td translate="no" style="font-weight: 700;">${u.username}</td>
+                    <td translate="no" style="font-size: 12px;">${tgInfo}</td>
+                    <td><span class="${isValid ? 'status-badge-ok' : 'status-badge-err'}">${isValid ? (u.plan_type || 'VIP ใช้งานได้') : 'รออนุมัติ / หมดอายุ'}</span></td>
+                    <td style="font-size: 12px; color: var(--text-muted); white-space: nowrap;">${isValid ? expText : '-'}</td>
+                    <td><div class="admin-btn-group">
+                        <button class="btn-grant" style="background: #f3e8ff; color: #7e22ce;" onclick="adminGrantDays('${u.id}', '${u.username}', 3, 'TRIAL_3D')">+3 วัน</button>
+                        <button class="btn-grant" style="background: #e0f2fe; color: #0369a1;" onclick="adminGrantDays('${u.id}', '${u.username}', 7, 'STARTER_7D')">+7 วัน</button>
+                        <button class="btn-grant" style="background: #dcfce7; color: #15803d;" onclick="adminGrantDays('${u.id}', '${u.username}', 30, 'PRO_30D')">+30 วัน</button>
+                        <button class="btn-grant" style="background: #fef3c7; color: #b45309;" onclick="adminGrantDays('${u.id}', '${u.username}', 90, 'VIP_90D')">+90 วัน</button>
+                        <button class="btn-grant" style="background: #fee2e2; color: #b91c1c;" onclick="adminRevokeUser('${u.id}', '${u.username}')">ระงับ</button>
+                        <button class="btn-grant" style="background: #e2e8f0; color: #1e293b;" onclick="adminResetPassword('${u.id}', '${u.username}')">🔑 รีเซ็ตรหัส</button>
+                    </div></td>
+                </tr>`;
             }).join('');
         }
 
         function filterAdminUsers() {
             const kw = document.getElementById('adminSearchInput').value.toLowerCase();
-            const filtered = adminUsersCache.filter(u =>
-                (u.username || '').toLowerCase().includes(kw) ||
-                (u.tg_phone || '').toLowerCase().includes(kw) ||
-                (u.tg_name || '').toLowerCase().includes(kw)
-            );
-            renderAdminUsers(filtered);
+            renderAdminUsers(adminUsersCache.filter(u => (u.username || '').toLowerCase().includes(kw) || (u.tg_phone || '').toLowerCase().includes(kw) || (u.tg_name || '').toLowerCase().includes(kw)));
         }
 
         async function adminGrantDays(targetUserId, username, days, planType) {
             if (!confirm(`ยืนยันอนุมัติเพิ่ม ${days} วัน ให้กับผู้ใช้ "${username}" ใช่หรือไม่?`)) return;
             try {
                 const headers = await getAuthHeader();
-                const res = await fetch(`${BACKEND_URL}/api/admin/grant-license`, {
-                    method: 'POST',
-                    headers,
-                    body: JSON.stringify({ targetUserId, days, planType })
-                });
+                const res = await fetch(`${BACKEND_URL}/api/admin/grant-license`, { method: 'POST', headers, body: JSON.stringify({ targetUserId, days, planType }) });
                 const result = await res.json();
                 if (!result.success) throw new Error(result.error);
                 alert(result.message);
                 await Promise.all([loadAdminUsers(), loadUserLicense()]);
-            } catch (e) {
-                alert('เกิดข้อผิดพลาด: ' + e.message);
-            }
+            } catch (e) { alert('เกิดข้อผิดพลาด: ' + e.message); }
         }
 
         async function adminRevokeUser(targetUserId, username) {
             if (!confirm(`ยืนยันการระงับสิทธิ์ใช้งานของผู้ใช้ "${username}" ใช่หรือไม่?`)) return;
             try {
                 const headers = await getAuthHeader();
-                const res = await fetch(`${BACKEND_URL}/api/admin/revoke-license`, {
-                    method: 'POST',
-                    headers,
-                    body: JSON.stringify({ targetUserId })
-                });
+                const res = await fetch(`${BACKEND_URL}/api/admin/revoke-license`, { method: 'POST', headers, body: JSON.stringify({ targetUserId }) });
                 const result = await res.json();
                 if (!result.success) throw new Error(result.error);
                 alert(result.message);
                 await Promise.all([loadAdminUsers(), loadUserLicense()]);
-            } catch (e) {
-                alert('เกิดข้อผิดพลาด: ' + e.message);
-            }
+            } catch (e) { alert('เกิดข้อผิดพลาด: ' + e.message); }
         }
 
-        // ================= USER FUNCTIONS =================
         async function loadUserAccounts() {
             if (!currentUser) return;
             const list = document.getElementById('accountsList');
             const countBadge = document.getElementById('sidebarAccountCount');
-
             const { data: accounts } = await supabaseClient.from('accounts').select('*').eq('user_id', currentUser.id);
-
             if (!accounts || accounts.length === 0) {
                 list.innerHTML = `<div class="empty-dashed-box">ยังไม่มีบัญชี Telegram ที่เชื่อมต่อ กรุณากดปุ่มเพื่อผูกบัญชี</div>`;
-                countBadge.innerText = '0';
-                return;
+                countBadge.innerText = '0'; return;
             }
-
             countBadge.innerText = accounts.length.toString();
-            list.innerHTML = accounts.map(acc => `
-                <div class="account-item">
-                    <div>
-                        <h4 translate="no" style="font-weight: 700; font-size: 14px;">${acc.first_name || 'Telegram User'}</h4>
-                        <p style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">เบอร์โทร: ${acc.phone}</p>
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                        <span class="status-badge-ok" style="padding: 6px 12px; font-size: 12px;">● พร้อมทำงาน</span>
-                        <button onclick="disconnectTelegramAccount()" class="btn-danger-outline">🗑️ ตัดการเชื่อมต่อ</button>
-                    </div>
-                </div>
-            `).join('');
+            list.innerHTML = accounts.map(acc => `<div class="account-item"><div><h4 translate="no" style="font-weight: 700; font-size: 14px;">${acc.first_name || 'Telegram User'}</h4><p style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">เบอร์โทร: ${acc.phone}</p></div><div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;"><span class="status-badge-ok" style="padding: 6px 12px; font-size: 12px;">● พร้อมทำงาน</span><button onclick="disconnectTelegramAccount()" class="btn-danger-outline">🗑️ ตัดการเชื่อมต่อ</button></div></div>`).join('');
         }
 
         async function disconnectTelegramAccount() {
-            if (!confirm('ยืนยันการตัดการเชื่อมต่อบัญชี Telegram นี้? (รายชื่อกลุ่มที่ดึงไว้ของบัญชีนี้จะถูกล้างออกด้วย)')) return;
+            if (!confirm('ยืนยันการตัดการเชื่อมต่อบัญชี Telegram นี้?')) return;
             try {
                 const headers = await getAuthHeader();
                 const res = await fetch(`${BACKEND_URL}/api/telegram/disconnect`, { method: 'DELETE', headers });
@@ -1616,9 +1457,7 @@
                 if (!result.success) throw new Error(result.error);
                 alert(result.message);
                 await Promise.all([loadUserAccounts(), loadUserGroups()]);
-            } catch (e) {
-                alert(e.message || 'เกิดข้อผิดพลาดในการตัดการเชื่อมต่อ');
-            }
+            } catch (e) { alert(e.message || 'เกิดข้อผิดพลาดในการตัดการเชื่อมต่อ'); }
         }
 
         function updateSelectedCounter() {
@@ -1638,59 +1477,37 @@
 
         function renderGroups(groups) {
             const list = document.getElementById('groupsList');
-            if (!groups || groups.length === 0) {
-                list.innerHTML = `<div class="empty-dashed-box">ยังไม่มีรายการกลุ่ม กรุณากด "ดึงกลุ่มจาก Telegram"</div>`;
-                return;
-            }
-
-            list.innerHTML = groups.map(g => `
-                <div class="group-row">
-                    <label style="display: flex; align-items: center; gap: 12px; font-size: 13.5px; font-weight: 500; cursor: pointer; flex: 1;">
-                        <input type="checkbox" ${g.is_selected ? 'checked' : ''} onchange="toggleGroup('${g.id}', '${g.group_id}', this.checked, this)">
-                        <span translate="no" style="word-break: break-word;">${g.group_name}</span>
-                    </label>
-                    <span class="group-id-text" style="font-size: 11px; color: var(--text-muted);">ID: ${g.group_id}</span>
-                </div>
-            `).join('');
+            if (!groups || groups.length === 0) { list.innerHTML = `<div class="empty-dashed-box">ยังไม่มีรายการกลุ่ม กรุณากด "ดึงกลุ่มจาก Telegram"</div>`; return; }
+            list.innerHTML = groups.map(g => `<div class="group-row"><label style="display: flex; align-items: center; gap: 12px; font-size: 13.5px; font-weight: 500; cursor: pointer; flex: 1;"><input type="checkbox" ${g.is_selected ? 'checked' : ''} onchange="toggleGroup('${g.id}', '${g.group_id}', this.checked, this)"><span translate="no" style="word-break: break-word;">${g.group_name}</span></label><span class="group-id-text" style="font-size: 11px; color: var(--text-muted);">ID: ${g.group_id}</span></div>`).join('');
         }
 
         function filterGroups() {
             const keyword = document.getElementById('groupSearchInput').value.toLowerCase();
-            const filtered = allGroupsCache.filter(g => (g.group_name || '').toLowerCase().includes(keyword));
-            renderGroups(filtered);
+            renderGroups(allGroupsCache.filter(g => (g.group_name || '').toLowerCase().includes(keyword)));
         }
 
         async function loadSavedMessagePreview() {
             const box = document.getElementById('savedMsgBox');
-            box.innerText = '⏳ กำลังดึงข้อความล่าสุดจาก Saved Messages...';
+            const count = getSavedRotateCount();
+            box.innerText = `⏳ กำลังดึงพรีวิว ${count} โพสต์ล่าสุดจาก Saved Messages...`;
             try {
                 const headers = await getAuthHeader();
-                const res = await fetch(`${BACKEND_URL}/api/telegram/saved-messages`, { headers });
+                const res = await fetch(`${BACKEND_URL}/api/telegram/saved-messages?count=${count}`, { headers });
                 const result = await res.json();
-                if (!result.success) {
-                    box.innerText = `⚠️ ${result.message || 'ไม่พบข้อความ'}`;
-                    return;
-                }
-                const text = result.messages[0]?.text || '(โพสต์รูปภาพ/วิดีโอ หรือไม่มีข้อความตัวอักษร)';
-                box.innerText = text;
-            } catch (e) {
-                box.innerText = `❌ เกิดข้อผิดพลาด: ${e.message}`;
-            }
+                if (!result.success) { box.innerText = `⚠️ ${result.message || 'ไม่พบข้อความ'}`; return; }
+                box.innerText = result.messages.map(m => m.text).join('\n\n========================================\n\n');
+            } catch (e) { box.innerText = `❌ เกิดข้อผิดพลาด: ${e.message}`; }
         }
 
         function startStatusPolling() {
             if (statusInterval) clearInterval(statusInterval);
             statusInterval = setInterval(() => {
                 fetchQueueStatus();
-                if (document.getElementById('sec-queue').style.display !== 'none') {
-                    fetchExecutionLogs();
-                }
+                if (document.getElementById('sec-queue').style.display !== 'none') fetchExecutionLogs();
             }, 3000);
         }
 
-        async function refreshQueueAndLogs() {
-            await Promise.all([fetchQueueStatus(), fetchExecutionLogs()]);
-        }
+        async function refreshQueueAndLogs() { await Promise.all([fetchQueueStatus(), fetchExecutionLogs()]); }
 
         function formatCountdownText(seconds) {
             if (!seconds || seconds <= 0) return '0s';
@@ -1698,8 +1515,7 @@
             const h = Math.floor(seconds / 3600);
             const m = Math.floor((seconds % 3600) / 60);
             const s = seconds % 60;
-            if (h > 0) return `${h}ชม. ${m}น.`;
-            return `${m}น. ${s}วิ`;
+            return h > 0 ? `${h}ชม. ${m}น.` : `${m}น. ${s}วิ`;
         }
 
         async function fetchQueueStatus() {
@@ -1717,15 +1533,15 @@
 
                     if (typeof s.loopHours === 'number') {
                         const sel = document.getElementById('autoLoopSelect');
-                        if (sel && document.activeElement !== sel) {
-                            sel.value = s.loopHours.toString();
-                        }
+                        if (sel && document.activeElement !== sel) sel.value = s.loopHours.toString();
                         updateAutoLoopPill(s.loopHours, s.isWaitingNextLoop ? s.nextDelay : 0, s.cycleCount || 1);
                     }
+                    if (typeof s.rotateCount === 'number') {
+                        const rotSel = document.getElementById('postRotateSelect');
+                        if (rotSel && document.activeElement !== rotSel) rotSel.value = s.rotateCount.toString();
+                    }
                 }
-            } catch (e) {
-                console.error(e);
-            }
+            } catch (e) { console.error(e); }
         }
 
         async function fetchExecutionLogs() {
@@ -1734,27 +1550,15 @@
                 const res = await fetch(`${BACKEND_URL}/api/logs`, { headers });
                 const result = await res.json();
                 const tbody = document.getElementById('logsTableBody');
-
                 if (!result.success || !result.logs || result.logs.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 24px;">ยังไม่มีประวัติการส่งโพสต์</td></tr>`;
-                    return;
+                    tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 24px;">ยังไม่มีประวัติการส่งโพสต์</td></tr>`; return;
                 }
-
                 tbody.innerHTML = result.logs.map(log => {
                     const timeStr = new Date(log.created_at).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
                     const isOk = log.status === 'success';
-                    return `
-                        <tr>
-                            <td style="color: var(--text-muted); white-space: nowrap;">${timeStr}</td>
-                            <td translate="no" style="font-weight: 600;">${log.group_name || '-'}</td>
-                            <td><span class="${isOk ? 'status-badge-ok' : 'status-badge-err'}">${isOk ? 'สำเร็จ' : 'ไม่สำเร็จ'}</span></td>
-                            <td style="color: var(--text-muted); font-size: 12px;">${log.message || '-'}</td>
-                        </tr>
-                    `;
+                    return `<tr><td style="color: var(--text-muted); white-space: nowrap;">${timeStr}</td><td translate="no" style="font-weight: 600;">${log.group_name || '-'}</td><td><span class="${isOk ? 'status-badge-ok' : 'status-badge-err'}">${isOk ? 'สำเร็จ' : 'ไม่สำเร็จ'}</span></td><td style="color: var(--text-muted); font-size: 12px;">${log.message || '-'}</td></tr>`;
                 }).join('');
-            } catch (e) {
-                console.error(e);
-            }
+            } catch (e) { console.error(e); }
         }
 
         function openTelegramModal() {
@@ -1765,44 +1569,23 @@
             document.getElementById('tgModalError').style.display = 'none';
         }
 
-        function closeTelegramModal() {
-            document.getElementById('tgModal').style.display = 'none';
-        }
+        function closeTelegramModal() { document.getElementById('tgModal').style.display = 'none'; }
 
         async function requestTelegramCode() {
             const phone = document.getElementById('tgPhoneInput').value.trim();
             const btn = document.getElementById('btnSendCode');
             const err = document.getElementById('tgModalError');
-
-            if (!phone) {
-                err.innerText = 'กรุณากรอกเบอร์โทรศัพท์';
-                err.style.display = 'block';
-                return;
-            }
-
-            btn.disabled = true;
-            btn.innerText = 'กำลังส่งรหัส...';
-            err.style.display = 'none';
-
+            if (!phone) { err.innerText = 'กรุณากรอกเบอร์โทรศัพท์'; err.style.display = 'block'; return; }
+            btn.disabled = true; btn.innerText = 'กำลังส่งรหัส...'; err.style.display = 'none';
             try {
                 const headers = await getAuthHeader();
-                const res = await fetch(`${BACKEND_URL}/api/telegram/send-code`, {
-                    method: 'POST',
-                    headers,
-                    body: JSON.stringify({ phone })
-                });
+                const res = await fetch(`${BACKEND_URL}/api/telegram/send-code`, { method: 'POST', headers, body: JSON.stringify({ phone }) });
                 const result = await res.json();
                 if (!result.success) throw new Error(result.error);
-
                 document.getElementById('tgStep1').style.display = 'none';
                 document.getElementById('tgStep2').style.display = 'block';
-            } catch (e) {
-                err.innerText = e.message;
-                err.style.display = 'block';
-            } finally {
-                btn.disabled = false;
-                btn.innerText = 'ขอรหัส OTP';
-            }
+            } catch (e) { err.innerText = e.message; err.style.display = 'block'; }
+            finally { btn.disabled = false; btn.innerText = 'ขอรหัส OTP'; }
         }
 
         async function verifyTelegramCode() {
@@ -1810,36 +1593,17 @@
             const password = document.getElementById('tgPasswordInput').value.trim();
             const btn = document.getElementById('btnVerifyCode');
             const err = document.getElementById('tgModalError');
-
-            if (!code) {
-                err.innerText = 'กรุณากรอกรหัส OTP';
-                err.style.display = 'block';
-                return;
-            }
-
-            btn.disabled = true;
-            btn.innerText = 'กำลังยืนยัน...';
-            err.style.display = 'none';
-
+            if (!code) { err.innerText = 'กรุณากรอกรหัส OTP'; err.style.display = 'block'; return; }
+            btn.disabled = true; btn.innerText = 'กำลังยืนยัน...'; err.style.display = 'none';
             try {
                 const headers = await getAuthHeader();
-                const res = await fetch(`${BACKEND_URL}/api/telegram/verify-code`, {
-                    method: 'POST',
-                    headers,
-                    body: JSON.stringify({ code, password })
-                });
+                const res = await fetch(`${BACKEND_URL}/api/telegram/verify-code`, { method: 'POST', headers, body: JSON.stringify({ code, password }) });
                 const result = await res.json();
                 if (!result.success) throw new Error(result.error);
-
                 closeTelegramModal();
                 await loadUserAccounts();
-            } catch (e) {
-                err.innerText = e.message;
-                err.style.display = 'block';
-            } finally {
-                btn.disabled = false;
-                btn.innerText = 'ยืนยันและเชื่อมต่อ';
-            }
+            } catch (e) { err.innerText = e.message; err.style.display = 'block'; }
+            finally { btn.disabled = false; btn.innerText = 'ยืนยันและเชื่อมต่อ'; }
         }
 
         async function syncTelegramGroups() {
@@ -1847,53 +1611,34 @@
             try {
                 const headers = await getAuthHeader();
                 const res = await fetch(`${BACKEND_URL}/api/telegram/sync-groups`, { method: 'POST', headers });
-                if (!res.ok) {
-                    const errData = await res.json().catch(() => null);
-                    throw new Error((errData && (errData.message || errData.error)) || 'เซิร์ฟเวอร์ใช้เวลาดึงข้อมูลนานกว่าปกติ กรุณากด F5 รีเฟรชหน้าเว็บเพื่อดูรายชื่อกลุ่ม');
-                }
+                if (!res.ok) { const errData = await res.json().catch(() => null); throw new Error((errData && (errData.message || errData.error)) || 'กรุณากด F5 รีเฟรชหน้าเว็บเพื่อดูรายชื่อกลุ่ม'); }
                 const result = await res.json();
                 if (!result.success) throw new Error(result.error || result.message);
                 await loadUserGroups();
                 alert(result.message);
-            } catch (e) {
-                alert(e.message || 'เกิดข้อผิดพลาดในการดึงกลุ่ม');
-            }
+            } catch (e) { alert(e.message || 'เกิดข้อผิดพลาดในการดึงกลุ่ม'); }
         }
 
         async function toggleGroup(id, group_id, is_selected, checkboxEl) {
             try {
                 const headers = await getAuthHeader();
-                const res = await fetch(`${BACKEND_URL}/api/groups/toggle`, {
-                    method: 'POST',
-                    headers,
-                    body: JSON.stringify({ id, group_id, is_selected })
-                });
+                const res = await fetch(`${BACKEND_URL}/api/groups/toggle`, { method: 'POST', headers, body: JSON.stringify({ id, group_id, is_selected }) });
                 const result = await res.json();
                 if (!result.success) throw new Error(result.error);
-
                 const item = allGroupsCache.find(g => g.group_id === group_id || g.id === id);
                 if (item) item.is_selected = is_selected;
                 updateSelectedCounter();
-            } catch (e) {
-                if (checkboxEl) checkboxEl.checked = !is_selected;
-                alert('บันทึกการเลือกกลุ่มไม่สำเร็จ: ' + e.message);
-            }
+            } catch (e) { if (checkboxEl) checkboxEl.checked = !is_selected; alert('บันทึกการเลือกกลุ่มไม่สำเร็จ: ' + e.message); }
         }
 
         async function toggleAllGroups(is_selected) {
             try {
                 const headers = await getAuthHeader();
-                const res = await fetch(`${BACKEND_URL}/api/groups/toggle-all`, {
-                    method: 'POST',
-                    headers,
-                    body: JSON.stringify({ is_selected })
-                });
+                const res = await fetch(`${BACKEND_URL}/api/groups/toggle-all`, { method: 'POST', headers, body: JSON.stringify({ is_selected }) });
                 const result = await res.json();
                 if (!result.success) throw new Error(result.error);
                 await loadUserGroups();
-            } catch (e) {
-                alert('เกิดข้อผิดพลาด: ' + e.message);
-            }
+            } catch (e) { alert('เกิดข้อผิดพลาด: ' + e.message); }
         }
 
         async function runQueue() {
@@ -1901,28 +1646,21 @@
             const selectedCount = allGroupsCache.filter(g => g.is_selected === true).length;
             if (selectedCount === 0) {
                 alert('กรุณาติ๊กเลือกกลุ่มเป้าหมายที่ต้องการยิงโพสต์อย่างน้อย 1 กลุ่มก่อนกด RUN');
-                switchPage('groups');
-                return;
+                switchPage('groups'); return;
             }
             const loopHours = parseInt(document.getElementById('autoLoopSelect').value, 10) || 0;
-            const loopMsg = loopHours > 0
-                ? `\n🔁 โหมด Auto-Loop 24 ชม.: เมื่อยิงครบทุกกลุ่มจะพัก ${loopHours} ชั่วโมงแล้ววนยิงซ้ำอัตโนมัติ`
-                : `\n⏹ โหมดยิงรอบเดียว (สามารถเปิด Auto-Loop ด้านบนได้)`;
+            const rotateCount = parseInt(document.getElementById('postRotateSelect')?.value || '1', 10) || 1;
+            const rotMsg = rotateCount > 1 ? `\n🎲 โหมดสุ่มสลับโพสต์: สุ่มยิงจาก ${rotateCount} โพสต์ล่าสุดใน Saved Messages` : '';
+            const loopMsg = loopHours > 0 ? `\n🔁 โหมด Auto-Loop 24 ชม.: เมื่อยิงครบทุกกลุ่มจะพักแบบสุ่ม ~${loopHours} ชั่วโมงแล้ววนยิงซ้ำอัตโนมัติ` : `\n⏹ โหมดยิงรอบเดียว`;
 
-            if (!confirm(`ยืนยันการเริ่มยิงโพสต์เฉพาะ ${selectedCount} กลุ่มที่เลือกไว้ใช่หรือไม่?${loopMsg}`)) return;
+            if (!confirm(`ยืนยันการเริ่มยิงโพสต์เฉพาะ ${selectedCount} กลุ่มที่เลือกไว้ใช่หรือไม่?${rotMsg}${loopMsg}`)) return;
             try {
                 const headers = await getAuthHeader();
-                const res = await fetch(`${BACKEND_URL}/api/run`, {
-                    method: 'POST',
-                    headers,
-                    body: JSON.stringify({ loopHours })
-                });
+                const res = await fetch(`${BACKEND_URL}/api/run`, { method: 'POST', headers, body: JSON.stringify({ loopHours, rotateCount }) });
                 const result = await res.json();
                 alert(result.message);
                 if (res.ok && result.success) switchPage('queue');
-            } catch (e) {
-                alert(e.message);
-            }
+            } catch (e) { alert(e.message); }
         }
 
         async function stopQueue() {
@@ -1932,9 +1670,7 @@
                 const result = await res.json();
                 alert(result.message);
                 refreshQueueAndLogs();
-            } catch (e) {
-                alert(e.message);
-            }
+            } catch (e) { alert(e.message); }
         }
 
         async function resetQueueProgress() {
@@ -1945,9 +1681,7 @@
                 const result = await res.json();
                 alert(result.message);
                 refreshQueueAndLogs();
-            } catch (e) {
-                alert(e.message);
-            }
+            } catch (e) { alert(e.message); }
         }
 
         window.onload = initApp;
