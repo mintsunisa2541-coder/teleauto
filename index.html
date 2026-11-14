@@ -12,10 +12,30 @@
             --primary-light: #f3e8ff;
             --secondary: #ec4899;
             --bg-main: #f8fafc;
-            --card-bg: #ffffff;
+            --card-bg: rgba(255, 255, 255, 0.96);
+            --card-solid: #ffffff;
+            --surface-sub: #f8fafc;
             --text-main: #1e293b;
             --text-muted: #64748b;
             --border-color: #f1f5f9;
+            --border-strong: #e2e8f0;
+            --input-bg: #ffffff;
+        }
+
+        /* ---------------- Dark Mode Variables ---------------- */
+        body.dark-theme {
+            --primary: #a855f7;
+            --primary-light: rgba(168, 85, 247, 0.18);
+            --secondary: #f472b6;
+            --bg-main: #090d16;
+            --card-bg: rgba(17, 24, 39, 0.94);
+            --card-solid: #111827;
+            --surface-sub: #1f2937;
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --border-color: #1f2937;
+            --border-strong: #334155;
+            --input-bg: #1e293b;
         }
 
         * {
@@ -32,6 +52,7 @@
             min-height: 100vh;
             display: flex;
             position: relative;
+            transition: background-color 0.25s ease, color 0.25s ease;
         }
 
         /* ---------------- Global Watermark ---------------- */
@@ -43,6 +64,11 @@
             opacity: 0.45;
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='220' viewBox='0 0 320 220'%3E%3Ctext x='50%25' y='50%25' fill='%239333ea' fill-opacity='0.06' font-family='sans-serif' font-weight='800' font-size='16' letter-spacing='2' text-anchor='middle' transform='rotate(-22 160 110)'%3ETELEAUTO PRO • CLOUD AUTO BOT%3C/text%3E%3C/svg%3E");
             background-repeat: repeat;
+        }
+
+        body.dark-theme .global-watermark {
+            opacity: 0.65;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='220' viewBox='0 0 320 220'%3E%3Ctext x='50%25' y='50%25' fill='%23c084fc' fill-opacity='0.07' font-family='sans-serif' font-weight='800' font-size='16' letter-spacing='2' text-anchor='middle' transform='rotate(-22 160 110)'%3ETELEAUTO PRO • CLOUD AUTO BOT%3C/text%3E%3C/svg%3E");
         }
 
         /* ---------------- Button Click & Ripple Effects ---------------- */
@@ -90,7 +116,7 @@
         }
 
         .ripple-wave.dark-ripple {
-            background: rgba(147, 51, 234, 0.22);
+            background: rgba(168, 85, 247, 0.28);
         }
 
         @keyframes rippleAnim {
@@ -98,6 +124,21 @@
                 transform: scale(3.5);
                 opacity: 0;
             }
+        }
+
+        /* ---------------- Theme Toggle Button ---------------- */
+        .btn-theme-toggle {
+            background: var(--card-solid);
+            border: 1px solid var(--border-strong);
+            color: var(--text-main);
+            padding: 8px 14px;
+            border-radius: 30px;
+            font-size: 12.5px;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
         }
 
         /* ---------------- Pending Approval Alert ---------------- */
@@ -113,6 +154,11 @@
             z-index: 10;
         }
 
+        body.dark-theme .pending-approval-box {
+            background: linear-gradient(135deg, rgba(136, 19, 55, 0.45) 0%, rgba(76, 5, 25, 0.65) 100%);
+            border-color: #be123c;
+        }
+
         .pending-title {
             font-size: 16px;
             font-weight: 800;
@@ -123,11 +169,19 @@
             margin-bottom: 6px;
         }
 
+        body.dark-theme .pending-title {
+            color: #fda4af;
+        }
+
         .pending-desc {
             font-size: 13px;
             color: #881337;
             line-height: 1.55;
             margin-bottom: 12px;
+        }
+
+        body.dark-theme .pending-desc {
+            color: #fecdd3;
         }
 
         .pending-actions {
@@ -137,7 +191,7 @@
         }
 
         .btn-copy-user {
-            background: #ffffff;
+            background: var(--card-solid);
             color: #be123c;
             border: 1px solid #fda4af;
             padding: 8px 14px;
@@ -145,6 +199,11 @@
             font-size: 12.5px;
             font-weight: 700;
             cursor: pointer;
+        }
+
+        body.dark-theme .btn-copy-user {
+            color: #fda4af;
+            border-color: #9f1239;
         }
 
         .btn-contact-admin-urgent {
@@ -162,7 +221,7 @@
         .intro-overlay {
             position: fixed;
             inset: 0;
-            background: rgba(15, 23, 42, 0.92);
+            background: rgba(9, 13, 22, 0.94);
             backdrop-filter: blur(10px);
             z-index: 10000;
             display: none;
@@ -310,6 +369,7 @@
             padding: 9px 10px;
             font-size: 11px;
             line-height: 1.4;
+            color: #1e293b;
         }
 
         .tg-quote-table {
@@ -369,6 +429,7 @@
             align-items: center;
             gap: 8px;
             font-weight: 600;
+            color: #1e293b;
         }
 
         .stat-row {
@@ -449,7 +510,7 @@
             padding: 16px;
             color: #ffffff;
             box-shadow: 0 18px 40px rgba(147, 51, 234, 0.28);
-            border: 2px solid #e9d5ff;
+            border: 2px solid rgba(168, 85, 247, 0.45);
         }
 
         .tut-screen {
@@ -471,24 +532,25 @@
         }
 
         .tut-step-card {
-            background: #f8fafc;
-            border: 1.5px solid #e2e8f0;
+            background: var(--surface-sub);
+            border: 1.5px solid var(--border-strong);
             border-radius: 16px;
             padding: 16px;
             cursor: pointer;
             transition: all 0.2s;
             text-align: left;
+            color: var(--text-main);
         }
 
         .tut-step-card.active-step {
-            background: #faf5ff;
-            border-color: #9333ea;
+            background: var(--primary-light);
+            border-color: var(--primary);
             box-shadow: 0 6px 16px rgba(147, 51, 234, 0.12);
         }
 
         .tut-step-num {
             display: inline-block;
-            background: #9333ea;
+            background: var(--primary);
             color: #ffffff;
             font-size: 11px;
             font-weight: 700;
@@ -524,7 +586,7 @@
         .auth-overlay {
             position: fixed;
             inset: 0;
-            background: rgba(15, 23, 42, 0.65);
+            background: rgba(9, 13, 22, 0.72);
             backdrop-filter: blur(8px);
             z-index: 9999;
             display: none;
@@ -535,13 +597,14 @@
         }
 
         .auth-card {
-            background: #ffffff;
+            background: var(--card-solid);
+            color: var(--text-main);
             border-radius: 24px;
             padding: 26px 22px;
             max-width: 440px;
             width: 100%;
-            box-shadow: 0 25px 50px -12px rgba(147, 51, 234, 0.25);
-            border: 1px solid rgba(243, 232, 255, 0.8);
+            box-shadow: 0 25px 50px -12px rgba(147, 51, 234, 0.3);
+            border: 1px solid var(--border-strong);
             text-align: center;
         }
 
@@ -559,9 +622,9 @@
         }
 
         .btn-replay-demo {
-            background: #f3e8ff;
-            color: #9333ea;
-            border: 1px solid #e9d5ff;
+            background: var(--primary-light);
+            color: var(--primary);
+            border: 1px solid rgba(168, 85, 247, 0.35);
             padding: 6px 14px;
             border-radius: 20px;
             font-size: 11.5px;
@@ -575,7 +638,7 @@
 
         .auth-tabs {
             display: flex;
-            background: #f1f5f9;
+            background: var(--surface-sub);
             padding: 4px;
             border-radius: 14px;
             margin: 14px 0;
@@ -594,15 +657,15 @@
         }
 
         .auth-tab-btn.active {
-            background: #ffffff;
+            background: var(--card-solid);
             color: var(--primary);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
         }
 
         .owner-notice-box {
-            background: #fdf4ff;
-            border: 1px solid #f5d0fe;
-            color: #86198f;
+            background: var(--primary-light);
+            border: 1px solid rgba(168, 85, 247, 0.35);
+            color: var(--text-main);
             border-radius: 14px;
             padding: 12px;
             font-size: 12px;
@@ -639,14 +702,16 @@
         .input-hint {
             display: block;
             font-size: 11px;
-            color: #94a3b8;
+            color: var(--text-muted);
             margin-top: 4px;
         }
 
         .input-control {
             width: 100%;
             padding: 12px 14px;
-            border: 1.5px solid #e2e8f0;
+            background: var(--input-bg);
+            color: var(--text-main);
+            border: 1.5px solid var(--border-strong);
             border-radius: 14px;
             font-size: 16px;
             outline: none;
@@ -655,7 +720,7 @@
 
         .input-control:focus {
             border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.15);
+            box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.2);
         }
 
         .btn-submit {
@@ -674,7 +739,7 @@
         /* ---------------- App Layout (Desktop Default) ---------------- */
         .sidebar {
             width: 270px;
-            background: rgba(255, 255, 255, 0.96);
+            background: var(--card-bg);
             border-right: 1px solid var(--border-color);
             padding: 28px 20px;
             display: flex;
@@ -734,7 +799,7 @@
         }
 
         .nav-item:hover:not(.active) {
-            background: #f8fafc;
+            background: var(--surface-sub);
             color: var(--text-main);
         }
 
@@ -745,20 +810,20 @@
         .badge-counter {
             font-size: 11px;
             font-weight: 700;
-            background: #f1f5f9;
+            background: var(--surface-sub);
             padding: 2px 8px;
             border-radius: 20px;
             color: var(--text-muted);
         }
 
         .nav-item.active .badge-counter {
-            background: rgba(147, 51, 234, 0.15);
+            background: rgba(168, 85, 247, 0.2);
             color: var(--primary);
         }
 
         .sidebar-bottom {
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
+            background: var(--surface-sub);
+            border: 1px solid var(--border-strong);
             border-radius: 16px;
             padding: 16px;
             text-align: center;
@@ -775,6 +840,11 @@
             padding: 4px 12px;
             border-radius: 20px;
             margin-top: 6px;
+        }
+
+        body.dark-theme .delay-pill {
+            background: rgba(16, 185, 129, 0.16);
+            color: #34d399;
         }
 
         /* ---------------- Main View ---------------- */
@@ -808,8 +878,9 @@
         }
 
         .user-tag {
-            background: #ffffff;
-            border: 1px solid #e2e8f0;
+            background: var(--card-solid);
+            border: 1px solid var(--border-strong);
+            color: var(--text-main);
             padding: 8px 14px;
             border-radius: 30px;
             font-size: 13px;
@@ -832,10 +903,17 @@
             gap: 6px;
         }
 
+        body.dark-theme .vip-tag {
+            background: rgba(245, 158, 11, 0.16);
+            border-color: rgba(245, 158, 11, 0.35);
+            color: #fbbf24;
+        }
+
         .btn-action-group {
             display: flex;
             align-items: center;
             gap: 10px;
+            flex-wrap: wrap;
         }
 
         .btn-stop {
@@ -863,8 +941,8 @@
         }
 
         .btn-logout {
-            background: #ffffff;
-            border: 1px solid #e2e8f0;
+            background: var(--card-solid);
+            border: 1px solid var(--border-strong);
             padding: 9px 14px;
             border-radius: 12px;
             color: var(--text-muted);
@@ -966,8 +1044,8 @@
         }
 
         .price-card {
-            background: #ffffff;
-            border: 1.5px solid #e2e8f0;
+            background: var(--card-solid);
+            border: 1.5px solid var(--border-strong);
             border-radius: 20px;
             padding: 22px;
             position: relative;
@@ -977,8 +1055,8 @@
         }
 
         .price-card.featured {
-            border: 2px solid #9333ea;
-            background: linear-gradient(180deg, #faf5ff 0%, #ffffff 100%);
+            border: 2px solid var(--primary);
+            background: linear-gradient(180deg, var(--primary-light) 0%, var(--card-solid) 100%);
         }
 
         .price-badge {
@@ -1002,7 +1080,7 @@
 
         .price-per-day {
             font-size: 12px;
-            color: #059669;
+            color: #10b981;
             font-weight: 600;
             margin-bottom: 14px;
         }
@@ -1019,8 +1097,8 @@
             display: block;
             text-align: center;
             text-decoration: none;
-            background: #f3e8ff;
-            color: #9333ea;
+            background: var(--primary-light);
+            color: var(--primary);
             font-weight: 700;
             font-size: 13px;
             padding: 12px;
@@ -1035,12 +1113,12 @@
 
         /* ---------------- Section Cards ---------------- */
         .content-card {
-            background: rgba(255, 255, 255, 0.96);
+            background: var(--card-bg);
             border-radius: 22px;
             padding: 24px;
             border: 1px solid var(--border-color);
             margin-bottom: 20px;
-            box-shadow: 0 4px 16px -2px rgba(0, 0, 0, 0.02);
+            box-shadow: 0 4px 16px -2px rgba(0, 0, 0, 0.04);
             position: relative;
         }
 
@@ -1076,6 +1154,12 @@
             cursor: pointer;
         }
 
+        body.dark-theme .btn-reset-queue {
+            background: rgba(225, 29, 72, 0.18);
+            color: #fda4af;
+            border-color: rgba(225, 29, 72, 0.35);
+        }
+
         .btn-danger-outline {
             background: #fff1f2;
             color: #e11d48;
@@ -1087,9 +1171,15 @@
             cursor: pointer;
         }
 
+        body.dark-theme .btn-danger-outline {
+            background: rgba(225, 29, 72, 0.18);
+            color: #fda4af;
+            border-color: rgba(225, 29, 72, 0.35);
+        }
+
         .account-item {
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
+            background: var(--surface-sub);
+            border: 1px solid var(--border-strong);
             border-radius: 16px;
             padding: 16px;
             display: flex;
@@ -1111,15 +1201,18 @@
             flex: 1;
             min-width: 180px;
             padding: 9px 12px;
-            border: 1px solid #cbd5e1;
+            background: var(--input-bg);
+            color: var(--text-main);
+            border: 1px solid var(--border-strong);
             border-radius: 10px;
             font-size: 14px;
             outline: none;
         }
 
         .tool-btn {
-            background: #ffffff;
-            border: 1px solid #cbd5e1;
+            background: var(--card-solid);
+            color: var(--text-main);
+            border: 1px solid var(--border-strong);
             padding: 9px 12px;
             border-radius: 10px;
             font-size: 12px;
@@ -1132,7 +1225,7 @@
             align-items: center;
             justify-content: space-between;
             padding: 14px 12px;
-            border-bottom: 1px solid #f1f5f9;
+            border-bottom: 1px solid var(--border-color);
             gap: 10px;
         }
 
@@ -1145,8 +1238,8 @@
 
         .selected-pill {
             display: inline-block;
-            background: #f3e8ff;
-            color: #9333ea;
+            background: var(--primary-light);
+            color: var(--primary);
             padding: 3px 10px;
             border-radius: 20px;
             font-size: 12px;
@@ -1162,18 +1255,49 @@
         }
 
         .stat-box {
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
+            background: var(--surface-sub);
+            border: 1px solid var(--border-strong);
             border-radius: 16px;
             padding: 14px 10px;
             text-align: center;
+        }
+
+        .saved-msg-preview-box {
+            background: var(--surface-sub);
+            border: 1.5px dashed var(--border-strong);
+            border-radius: 18px;
+            padding: 20px;
+            font-size: 14px;
+            font-family: system-ui, -apple-system, 'Kanit', sans-serif;
+            color: var(--text-main);
+            white-space: pre-wrap;
+            line-height: 1.6;
+            overflow-x: auto;
+        }
+
+        .empty-dashed-box {
+            text-align: center;
+            padding: 26px;
+            border: 2px dashed var(--border-strong);
+            border-radius: 16px;
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+
+        .latest-target-box {
+            background: var(--surface-sub);
+            border: 1px solid var(--border-strong);
+            border-radius: 14px;
+            padding: 14px;
+            font-size: 13px;
+            margin-bottom: 20px;
         }
 
         /* ---------------- History & Admin Table ---------------- */
         .table-scroll-wrap {
             overflow-x: auto;
             -webkit-overflow-scrolling: touch;
-            border: 1px solid #f1f5f9;
+            border: 1px solid var(--border-strong);
             border-radius: 14px;
         }
 
@@ -1187,16 +1311,16 @@
         .log-table th {
             text-align: left;
             padding: 12px;
-            background: #f8fafc;
+            background: var(--surface-sub);
             color: var(--text-muted);
             font-weight: 600;
-            border-bottom: 1px solid #e2e8f0;
+            border-bottom: 1px solid var(--border-strong);
             white-space: nowrap;
         }
 
         .log-table td {
             padding: 12px;
-            border-bottom: 1px solid #f1f5f9;
+            border-bottom: 1px solid var(--border-color);
         }
 
         .status-badge-ok {
@@ -1209,6 +1333,11 @@
             white-space: nowrap;
         }
 
+        body.dark-theme .status-badge-ok {
+            background: rgba(16, 185, 129, 0.18);
+            color: #34d399;
+        }
+
         .status-badge-err {
             background: #fef2f2;
             color: #dc2626;
@@ -1217,6 +1346,11 @@
             font-size: 11px;
             font-weight: 700;
             white-space: nowrap;
+        }
+
+        body.dark-theme .status-badge-err {
+            background: rgba(239, 68, 68, 0.18);
+            color: #f87171;
         }
 
         .admin-btn-group {
@@ -1257,8 +1391,8 @@
                 height: 68px;
                 padding: 4px 2px;
                 border-right: none;
-                border-top: 1px solid #e2e8f0;
-                box-shadow: 0 -4px 20px rgba(15, 23, 42, 0.06);
+                border-top: 1px solid var(--border-strong);
+                box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
                 z-index: 900;
                 flex-direction: row;
                 align-items: center;
@@ -1312,9 +1446,9 @@
                 display: flex;
                 align-items: center;
                 justify-content: space-between;
-                background: #ffffff;
-                padding: 12px 16px;
-                border-bottom: 1px solid #f1f5f9;
+                background: var(--card-solid);
+                padding: 12px 14px;
+                border-bottom: 1px solid var(--border-color);
                 position: sticky;
                 top: 0;
                 z-index: 800;
@@ -1347,7 +1481,8 @@
                 width: 100%;
             }
 
-            .btn-action-group .btn-logout {
+            .btn-action-group .btn-logout,
+            .btn-action-group .btn-theme-toggle {
                 display: none;
             }
 
@@ -1542,6 +1677,9 @@
     <!-- 1. AUTH MODAL -->
     <div id="authOverlay" class="auth-overlay">
         <div class="auth-card">
+            <div style="display: flex; justify-content: flex-end; margin-bottom: 4px;">
+                <button type="button" class="btn-theme-toggle" onclick="toggleTheme()" id="authThemeBtn">🌙 โหมดมืด</button>
+            </div>
             <div class="auth-logo">🚀</div>
             <h2 translate="no" style="font-size: 21px; font-weight: 700;">TeleAuto <span style="font-size: 11px; background: #fce7f3; color: #ec4899; padding: 3px 8px; border-radius: 20px;">PRO</span></h2>
             <p style="font-size: 12.5px; color: var(--text-muted); margin-top: 4px;">ระบบบอทยิงโพสต์อัตโนมัติ 24 ชั่วโมง</p>
@@ -1579,11 +1717,11 @@
     <div class="mobile-header-bar">
         <div style="display: flex; align-items: center; gap: 8px;">
             <div style="width: 32px; height: 32px; background: linear-gradient(135deg, #9333ea, #ec4899); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 16px;">⚡</div>
-            <span translate="no" style="font-weight: 700; font-size: 16px;">TeleAuto <span style="font-size: 10px; background: #f3e8ff; color: #9333ea; padding: 2px 6px; border-radius: 6px;">PRO</span></span>
+            <span translate="no" style="font-weight: 700; font-size: 15.5px;">TeleAuto <span style="font-size: 10px; background: var(--primary-light); color: var(--primary); padding: 2px 6px; border-radius: 6px;">PRO</span></span>
         </div>
-        <div style="display: flex; align-items: center; gap: 8px;">
-            <span translate="no" style="font-size: 11px; color: #059669; background: #ecfdf5; padding: 4px 8px; border-radius: 12px; font-weight: 700;">● 35–85s</span>
-            <button onclick="handleLogout()" style="background: #f1f5f9; border: none; padding: 6px 10px; border-radius: 10px; font-size: 11.5px; font-weight: 600; color: #475569;">ออกระบบ</button>
+        <div style="display: flex; align-items: center; gap: 6px;">
+            <button type="button" onclick="toggleTheme()" id="mobileThemeBtn" style="background: var(--surface-sub); border: 1px solid var(--border-strong); color: var(--text-main); padding: 6px 9px; border-radius: 10px; font-size: 12px; font-weight: 700;">🌙</button>
+            <button onclick="handleLogout()" style="background: var(--surface-sub); border: 1px solid var(--border-strong); padding: 6px 10px; border-radius: 10px; font-size: 11.5px; font-weight: 600; color: var(--text-muted);">ออกระบบ</button>
         </div>
     </div>
 
@@ -1593,7 +1731,7 @@
             <div class="brand-box">
                 <div class="brand-icon">⚡</div>
                 <div>
-                    <h1 translate="no" style="font-size: 18px; font-weight: 700; line-height: 1.2;">TeleAuto <span style="font-size: 10px; background: #f3e8ff; color: #9333ea; padding: 2px 6px; border-radius: 6px;">PRO</span></h1>
+                    <h1 translate="no" style="font-size: 18px; font-weight: 700; line-height: 1.2;">TeleAuto <span style="font-size: 10px; background: var(--primary-light); color: var(--primary); padding: 2px 6px; border-radius: 6px;">PRO</span></h1>
                     <p style="font-size: 11px; color: var(--text-muted);">ระบบบอทยิงโพสต์อัตโนมัติ</p>
                 </div>
             </div>
@@ -1633,7 +1771,7 @@
                     <span class="nav-desktop-label">🔐 เปลี่ยนรหัสผ่าน</span>
                     <span class="nav-mobile-label"><span class="nav-mobile-icon">🔐</span>รหัสผ่าน</span>
                 </button>
-                <button id="nav-admin" class="nav-item" onclick="switchPage('admin')" style="display: none; border: 1px dashed #d8b4fe; color: #7e22ce;">
+                <button id="nav-admin" class="nav-item" onclick="switchPage('admin')" style="display: none; border: 1px dashed #c084fc; color: var(--primary);">
                     <span class="nav-desktop-label">👑 จัดการสมาชิก (Admin)</span>
                     <span class="nav-mobile-label"><span class="nav-mobile-icon">👑</span>แอดมิน</span>
                 </button>
@@ -1643,7 +1781,7 @@
         <div class="sidebar-bottom">
             <div style="font-size: 12px; color: var(--text-muted);">ระบบสุ่มหน่วงเวลา</div>
             <div translate="no" class="delay-pill">● 35–85s</div>
-            <p style="font-size: 10px; color: #94a3b8; margin-top: 8px;">โหมดป้องกันสแปมและบัญชีแบน</p>
+            <p style="font-size: 10px; color: var(--text-muted); margin-top: 8px;">โหมดป้องกันสแปมและบัญชีแบน</p>
         </div>
     </aside>
 
@@ -1662,6 +1800,7 @@
             </div>
 
             <div class="btn-action-group">
+                <button type="button" onclick="toggleTheme()" id="desktopThemeBtn" class="btn-theme-toggle">🌙 โหมดมืด</button>
                 <button translate="no" onclick="stopQueue()" class="btn-stop">■ STOP</button>
                 <button translate="no" onclick="runQueue()" class="btn-run">▶ RUN ยิงโพสต์</button>
                 <button onclick="handleLogout()" class="btn-logout">ออกจากระบบ</button>
@@ -1672,12 +1811,12 @@
         <div id="pendingApprovalBox" class="pending-approval-box">
             <div class="pending-title">🔒 บัญชีของคุณยังไม่ได้รับการอนุมัติแพ็กเกจ (รออนุมัติสิทธิ์ใช้งาน)</div>
             <div class="pending-desc">
-                หลังสมัครสมาชิก กรุณาแจ้งชื่อผู้ใช้ <strong translate="no" id="pendingUsernameText" style="background: #ffe4e6; padding: 2px 8px; border-radius: 6px;">-</strong> ให้ผู้ดูแลระบบทราบ เพื่อกดอนุมัติ <strong>แพ็กเกจทดลองใช้ฟรี 3 วัน</strong> ก่อนจึงจะสามารถเชื่อมต่อบัญชี ดึงกลุ่ม และสั่งยิงโพสต์ได้ครับ
+                หลังสมัครสมาชิก กรุณาแจ้งชื่อผู้ใช้ <strong translate="no" id="pendingUsernameText" style="background: rgba(244,63,94,0.18); padding: 2px 8px; border-radius: 6px;">-</strong> ให้ผู้ดูแลระบบทราบ เพื่อกดอนุมัติ <strong>แพ็กเกจทดลองใช้ฟรี 3 วัน</strong> ก่อนจึงจะสามารถเชื่อมต่อบัญชี ดึงกลุ่ม และสั่งยิงโพสต์ได้ครับ
             </div>
             <div class="pending-actions">
                 <button type="button" class="btn-copy-user" onclick="copyPendingUsername()">📋 คัดลอกชื่อผู้ใช้ของฉัน</button>
                 <a translate="no" href="https://t.me/huimin168" target="_blank" class="btn-contact-admin-urgent">💬 ทักแชทผู้ดูแล @huimin168 เพื่อขออนุมัติฟรี 3 วัน</a>
-                <button type="button" class="btn-copy-user" style="color: #059669; border-color: #6ee7b7;" onclick="loadUserLicense()">🔄 เช็กสถานะอนุมัติอีกครั้ง</button>
+                <button type="button" class="btn-copy-user" style="color: #10b981; border-color: #10b981;" onclick="loadUserLicense()">🔄 เช็กสถานะอนุมัติอีกครั้ง</button>
             </div>
         </div>
 
@@ -1794,7 +1933,7 @@
                     </thead>
                     <tbody id="adminUsersTableBody">
                         <tr>
-                            <td colspan="5" style="text-align: center; color: #94a3b8; padding: 24px;">กำลังโหลดรายชื่อสมาชิก...</td>
+                            <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 24px;">กำลังโหลดรายชื่อสมาชิก...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -1843,9 +1982,9 @@
                 </div>
 
                 <div class="price-card">
-                    <div class="price-badge" style="background: #0f172a;">👑 คุ้มค่าที่สุด</div>
+                    <div class="price-badge" style="background: #1e293b;">👑 คุ้มค่าที่สุด</div>
                     <div>
-                        <div style="font-size: 14px; font-weight: 700; color: #0f172a;">VIP QUARTERLY • 90 วัน</div>
+                        <div style="font-size: 14px; font-weight: 700; color: var(--text-main);">VIP QUARTERLY • 90 วัน</div>
                         <div class="price-amount">2,190 <span style="font-size: 16px; font-weight: 600;">฿</span></div>
                         <div class="price-per-day">เฉลี่ยเพียง 24 บาท / วัน (ประหยัด 480 ฿)</div>
                         <ul class="price-features">
@@ -1891,10 +2030,10 @@
                 </div>
                 <button onclick="loadSavedMessagePreview()" class="btn-primary">🔄 ดึงพรีวิวโพสต์ล่าสุด</button>
             </div>
-            <div style="background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; padding: 10px 14px; border-radius: 12px; font-size: 12px; margin-bottom: 12px;">
+            <div style="background: rgba(16, 185, 129, 0.14); border: 1px solid rgba(16, 185, 129, 0.35); color: #10b981; padding: 10px 14px; border-radius: 12px; font-size: 12px; margin-bottom: 12px; font-weight: 600;">
                 ✅ ระบบจะส่งโพสต์ล่าสุดจาก Saved Messages เข้ากลุ่มโดยรักษาตาราง ฟอนต์พิเศษ และอิโมจิพรีเมียมครบถ้วน 100%
             </div>
-            <div id="savedMsgBox" style="background: #f8fafc; border: 1.5px dashed #cbd5e1; border-radius: 18px; padding: 20px; font-size: 14px; font-family: system-ui, -apple-system, 'Kanit', sans-serif; color: var(--text-main); white-space: pre-wrap; line-height: 1.6; overflow-x: auto;">
+            <div id="savedMsgBox" class="saved-msg-preview-box">
                 กดปุ่ม "🔄 ดึงพรีวิวโพสต์ล่าสุด" เพื่อตรวจสอบข้อความล่าสุดที่จะส่ง
             </div>
         </section>
@@ -1910,7 +2049,7 @@
             </div>
 
             <div id="accountsList">
-                <div style="text-align: center; padding: 26px; border: 2px dashed #e2e8f0; border-radius: 16px; color: #94a3b8; font-size: 13px;">
+                <div class="empty-dashed-box">
                     ยังไม่มีบัญชี Telegram ที่เชื่อมต่อ กรุณากดปุ่มเพื่อผูกบัญชี
                 </div>
             </div>
@@ -1928,14 +2067,14 @@
                 </div>
                 <div class="group-toolbar">
                     <input type="search" id="groupSearchInput" class="group-search-box" autocomplete="off" oninput="filterGroups()" placeholder="🔍 ค้นหาชื่อกลุ่ม...">
-                    <button onclick="syncTelegramGroups()" class="tool-btn" style="background: #f1f5f9; border: none;">🔄 ดึงกลุ่มจาก Telegram</button>
+                    <button onclick="syncTelegramGroups()" class="tool-btn">🔄 ดึงกลุ่มจาก Telegram</button>
                     <button onclick="toggleAllGroups(true)" class="tool-btn">เลือกทั้งหมด</button>
                     <button onclick="toggleAllGroups(false)" class="tool-btn">ยกเลิกทั้งหมด</button>
                 </div>
             </div>
 
             <div id="groupsList" style="max-height: 430px; overflow-y: auto;">
-                <div style="text-align: center; padding: 26px; border: 2px dashed #e2e8f0; border-radius: 16px; color: #94a3b8; font-size: 13px;">
+                <div class="empty-dashed-box">
                     ยังไม่มีรายการกลุ่ม กรุณากด "ดึงกลุ่มจาก Telegram"
                 </div>
             </div>
@@ -1957,7 +2096,7 @@
             <div class="stat-grid">
                 <div class="stat-box">
                     <div style="font-size: 12px; color: var(--text-muted);">ส่งสำเร็จแล้ว</div>
-                    <div id="statSent" style="font-size: 24px; font-weight: 800; color: #059669; margin-top: 4px;">0</div>
+                    <div id="statSent" style="font-size: 24px; font-weight: 800; color: #10b981; margin-top: 4px;">0</div>
                 </div>
                 <div class="stat-box">
                     <div style="font-size: 12px; color: var(--text-muted);">ส่งไม่สำเร็จ</div>
@@ -1965,15 +2104,15 @@
                 </div>
                 <div class="stat-box">
                     <div style="font-size: 12px; color: var(--text-muted);">คงเหลือในคิว</div>
-                    <div id="statRemaining" style="font-size: 24px; font-weight: 800; color: #9333ea; margin-top: 4px;">0 / 0</div>
+                    <div id="statRemaining" style="font-size: 24px; font-weight: 800; color: var(--primary); margin-top: 4px;">0 / 0</div>
                 </div>
                 <div class="stat-box">
                     <div style="font-size: 12px; color: var(--text-muted);">หน่วงเวลารอบถัดไป</div>
-                    <div id="statDelay" style="font-size: 24px; font-weight: 800; color: #d97706; margin-top: 4px;">0s</div>
+                    <div id="statDelay" style="font-size: 24px; font-weight: 800; color: #f59e0b; margin-top: 4px;">0s</div>
                 </div>
             </div>
 
-            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 14px; font-size: 13px; margin-bottom: 20px;">
+            <div class="latest-target-box">
                 <strong>กลุ่มเป้าหมายล่าสุด:</strong> <span translate="no" id="statCurrentGroup" style="color: var(--primary);">-</span>
             </div>
 
@@ -1990,7 +2129,7 @@
                     </thead>
                     <tbody id="logsTableBody">
                         <tr>
-                            <td colspan="4" style="text-align: center; color: #94a3b8; padding: 24px;">กำลังโหลดประวัติการส่ง...</td>
+                            <td colspan="4" style="text-align: center; color: var(--text-muted); padding: 24px;">กำลังโหลดประวัติการส่ง...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -2003,7 +2142,7 @@
         <div class="auth-card" style="max-width: 380px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
                 <h3 style="font-size: 16px; font-weight: 700;">เชื่อมต่อ Telegram ด้วย OTP</h3>
-                <button onclick="closeTelegramModal()" style="border: none; background: none; font-size: 20px; cursor: pointer; padding: 4px;">✕</button>
+                <button onclick="closeTelegramModal()" style="border: none; background: none; color: var(--text-main); font-size: 20px; cursor: pointer; padding: 4px;">✕</button>
             </div>
 
             <div id="tgStep1">
@@ -2013,7 +2152,7 @@
             </div>
 
             <div id="tgStep2" style="display: none;">
-                <p style="font-size: 12px; color: #059669; font-weight: 600; margin-bottom: 10px;">ส่งรหัสแล้ว! ตรวจดูใน Telegram</p>
+                <p style="font-size: 12px; color: #10b981; font-weight: 600; margin-bottom: 10px;">ส่งรหัสแล้ว! ตรวจดูใน Telegram</p>
                 <input type="text" inputmode="numeric" id="tgCodeInput" class="input-control" placeholder="รหัส OTP 5 หลัก" style="text-align: center; font-size: 20px; letter-spacing: 4px; font-weight: 700; margin-bottom: 10px;">
                 <input type="password" id="tgPasswordInput" class="input-control" placeholder="รหัสผ่าน 2FA (ถ้ามี)" style="margin-bottom: 14px;">
                 <button onclick="verifyTelegramCode()" id="btnVerifyCode" class="btn-submit">ยืนยันและเชื่อมต่อ</button>
@@ -2039,6 +2178,36 @@
         let tutTimers = [];
         let currentTutStep = 0;
 
+        // ================= DARK / LIGHT THEME LOGIC =================
+        function applySavedTheme() {
+            const saved = localStorage.getItem('teleauto_theme') || 'light';
+            const isDark = saved === 'dark';
+            if (isDark) {
+                document.body.classList.add('dark-theme');
+            } else {
+                document.body.classList.remove('dark-theme');
+            }
+            updateThemeButtons(isDark);
+        }
+
+        function updateThemeButtons(isDark) {
+            const desktopBtn = document.getElementById('desktopThemeBtn');
+            const authBtn = document.getElementById('authThemeBtn');
+            const mobileBtn = document.getElementById('mobileThemeBtn');
+            if (desktopBtn) desktopBtn.innerText = isDark ? '☀️ โหมดสว่าง' : '🌙 โหมดมืด';
+            if (authBtn) authBtn.innerText = isDark ? '☀️ โหมดสว่าง' : '🌙 โหมดมืด';
+            if (mobileBtn) mobileBtn.innerText = isDark ? '☀️' : '🌙';
+        }
+
+        function toggleTheme() {
+            const isDark = document.body.classList.toggle('dark-theme');
+            localStorage.setItem('teleauto_theme', isDark ? 'dark' : 'light');
+            updateThemeButtons(isDark);
+        }
+
+        // โหลดธีมที่บันทึกไว้ทันทีที่เปิดหน้า
+        applySavedTheme();
+
         // ================= RIPPLE & CLICK GLOW EFFECT FOR ALL BUTTONS =================
         document.addEventListener('pointerdown', function (e) {
             const target = e.target.closest('button, .banner-cta-btn, .price-btn, .owner-contact-link, .btn-contact-admin-urgent');
@@ -2054,6 +2223,7 @@
                               target.classList.contains('tool-btn') ||
                               target.classList.contains('btn-logout') ||
                               target.classList.contains('btn-copy-user') ||
+                              target.classList.contains('btn-theme-toggle') ||
                               target.classList.contains('btn-replay-demo');
 
             ripple.className = isLightBg ? 'ripple-wave dark-ripple' : 'ripple-wave';
@@ -2537,14 +2707,10 @@
                     pendingBox.style.display = 'none';
                     const exp = new Date(result.expireDate);
                     vipBadge.innerText = `สมาชิก VIP (หมดอายุ: ${exp.getDate()}/${exp.getMonth()+1}/${exp.getFullYear()+543})`;
-                    vipBadge.parentElement.style.background = '#fffbeb';
-                    vipBadge.parentElement.style.color = '#d97706';
                 } else {
                     hasActiveLicense = false;
                     pendingBox.style.display = 'block';
                     vipBadge.innerText = 'รออนุมัติสิทธิ์ (ติดต่อ @huimin168)';
-                    vipBadge.parentElement.style.background = '#fef2f2';
-                    vipBadge.parentElement.style.color = '#dc2626';
                 }
             } catch (e) {
                 hasActiveLicense = false;
@@ -2614,7 +2780,7 @@
         // ================= ADMIN FUNCTIONS =================
         async function loadAdminUsers() {
             const tbody = document.getElementById('adminUsersTableBody');
-            tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #94a3b8; padding: 24px;">กำลังโหลดรายชื่อสมาชิก...</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 24px;">กำลังโหลดรายชื่อสมาชิก...</td></tr>`;
             try {
                 const headers = await getAuthHeader();
                 const res = await fetch(`${BACKEND_URL}/api/admin/users`, { headers });
@@ -2631,7 +2797,7 @@
         function renderAdminUsers(users) {
             const tbody = document.getElementById('adminUsersTableBody');
             if (!users || users.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #94a3b8; padding: 24px;">ไม่พบรายชื่อสมาชิก</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 24px;">ไม่พบรายชื่อสมาชิก</td></tr>`;
                 return;
             }
 
@@ -2640,7 +2806,7 @@
                 const expDate = u.expire_at ? new Date(u.expire_at) : null;
                 const isValid = u.is_active && expDate && expDate > now;
                 const expText = expDate ? `${expDate.getDate()}/${expDate.getMonth()+1}/${expDate.getFullYear()+543} ${expDate.toLocaleTimeString('th-TH', {hour:'2-digit', minute:'2-digit'})}` : '-';
-                const tgInfo = u.tg_phone ? `${u.tg_name || ''} (${u.tg_phone})` : '<span style="color:#94a3b8;">ยังไม่ผูกเบอร์</span>';
+                const tgInfo = u.tg_phone ? `${u.tg_name || ''} (${u.tg_phone})` : '<span style="color:var(--text-muted);">ยังไม่ผูกเบอร์</span>';
 
                 return `
                     <tr>
@@ -2659,7 +2825,7 @@
                                 <button class="btn-grant" style="background: #dcfce7; color: #15803d;" onclick="adminGrantDays('${u.id}', '${u.username}', 30, 'PRO_30D')">+30 วัน</button>
                                 <button class="btn-grant" style="background: #fef3c7; color: #b45309;" onclick="adminGrantDays('${u.id}', '${u.username}', 90, 'VIP_90D')">+90 วัน</button>
                                 <button class="btn-grant" style="background: #fee2e2; color: #b91c1c;" onclick="adminRevokeUser('${u.id}', '${u.username}')">ระงับ</button>
-                                <button class="btn-grant" style="background: #f1f5f9; color: #334155;" onclick="adminResetPassword('${u.id}', '${u.username}')">🔑 รีเซ็ตรหัส</button>
+                                <button class="btn-grant" style="background: #e2e8f0; color: #1e293b;" onclick="adminResetPassword('${u.id}', '${u.username}')">🔑 รีเซ็ตรหัส</button>
                             </div>
                         </td>
                     </tr>
@@ -2728,7 +2894,7 @@
 
             if (!accounts || accounts.length === 0) {
                 list.innerHTML = `
-                    <div style="text-align: center; padding: 26px; border: 2px dashed #e2e8f0; border-radius: 16px; color: #94a3b8; font-size: 13px;">
+                    <div class="empty-dashed-box">
                         ยังไม่มีบัญชี Telegram ที่เชื่อมต่อ กรุณากดปุ่มเพื่อผูกบัญชี
                     </div>
                 `;
@@ -2744,7 +2910,7 @@
                         <p style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">เบอร์โทร: ${acc.phone}</p>
                     </div>
                     <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                        <span style="font-size: 12px; font-weight: 700; color: #059669; background: #ecfdf5; padding: 6px 12px; border-radius: 20px;">
+                        <span class="status-badge-ok" style="padding: 6px 12px; font-size: 12px;">
                             ● พร้อมทำงาน
                         </span>
                         <button onclick="disconnectTelegramAccount()" class="btn-danger-outline">
@@ -2799,7 +2965,7 @@
             const list = document.getElementById('groupsList');
             if (!groups || groups.length === 0) {
                 list.innerHTML = `
-                    <div style="text-align: center; padding: 26px; border: 2px dashed #e2e8f0; border-radius: 16px; color: #94a3b8; font-size: 13px;">
+                    <div class="empty-dashed-box">
                         ยังไม่มีรายการกลุ่ม กรุณากด "ดึงกลุ่มจาก Telegram"
                     </div>
                 `;
@@ -2812,7 +2978,7 @@
                         <input type="checkbox" ${g.is_selected ? 'checked' : ''} onchange="toggleGroup('${g.id}', '${g.group_id}', this.checked, this)">
                         <span translate="no" style="word-break: break-word;">${g.group_name}</span>
                     </label>
-                    <span class="group-id-text" style="font-size: 11px; color: #94a3b8;">ID: ${g.group_id}</span>
+                    <span class="group-id-text" style="font-size: 11px; color: var(--text-muted);">ID: ${g.group_id}</span>
                 </div>
             `).join('');
         }
@@ -2880,7 +3046,7 @@
                 const tbody = document.getElementById('logsTableBody');
 
                 if (!result.success || !result.logs || result.logs.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: #94a3b8; padding: 24px;">ยังไม่มีประวัติการส่งโพสต์</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 24px;">ยังไม่มีประวัติการส่งโพสต์</td></tr>`;
                     return;
                 }
 
