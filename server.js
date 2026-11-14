@@ -111,6 +111,7 @@ async function requireActiveLicense(req, res, next) {
 
 const userQueues = new Map();
 const userLoopConfigs = new Map();
+const userRotationConfigs = new Map();
 const loginClients = new Map();
 
 const randomDelay = (min = 35, max = 85) => {
@@ -217,7 +218,7 @@ app.get('/api/license/status', authenticateUser, async (req, res) => {
     }
 });
 
-// ================= AUTO-LOOP CONFIG API =================
+// ================= AUTO-LOOP & POST ROTATION CONFIG API =================
 
 app.post('/api/loop/config', authenticateUser, (req, res) => {
     const userId = req.user.id;
@@ -233,8 +234,29 @@ app.post('/api/loop/config', authenticateUser, (req, res) => {
         success: true,
         loopHours,
         message: loopHours > 0
-            ? `ตั้งค่าวนยิงซ้ำอัตโนมัติทุก ${loopHours} ชั่วโมงเรียบร้อย`
+            ? `ตั้งค่าวนยิงซ้ำอัตโนมัติทุก ~${loopHours} ชั่วโมง (สุ่มเวลาแบบเนียน) เรียบร้อย`
             : 'ปิดโหมดวนลูปแล้ว (ยิงรอบเดียว)'
+    });
+});
+
+app.post('/api/rotation/config', authenticateUser, (req, res) => {
+    const userId = req.user.id;
+    const rotateCount = [1, 3, 5].includes(parseInt(req.body.rotateCount, 10))
+        ? parseInt(req.body.rotateCount, 10)
+        : 1;
+    userRotationConfigs.set(userId, rotateCount);
+
+    const queue = userQueues.get(userId);
+    if (queue) {
+        queue.rotateCount = rotateCount;
+    }
+
+    return res.json({
+        success: true,
+        rotateCount,
+        message: rotateCount > 1
+            ? `เปิดโหมดสุ่มสลับ ${rotateCount} โพสต์ล่าสุดจาก Saved Messages เรียบร้อย`
+            : 'ใช้โหมดยิงเฉพาะโพสต์ล่าสุด 1 โพสต์'
     });
 });
 
@@ -673,8 +695,11 @@ app.post('/api/queue/reset', authenticateUser, async (req, res) => {
     }
 });
 
+// พรีวิวโพสต์ล่าสุด (ดึงได้สูงสุด 5 โพสต์ล่าสุดสำหรับโหมดสุ่มสลับโพสต์)
 app.get('/api/telegram/saved-messages', authenticateUser, async (req, res) => {
     const userId = req.user.id;
+    const limitCount = Math.min(5, Math.max(1, parseInt(req.query.count, 10) || 1));
+
     try {
         const { data: account } = await supabase
             .from('accounts')
@@ -701,20 +726,25 @@ app.get('/api/telegram/saved-messages', authenticateUser, async (req, res) => {
             return res.json({ success: false, message: `ไม่พบโพสต์ใน Saved Messages ของบัญชี ${me.firstName || ''} (+${me.phone || account.phone})` });
         }
 
-        const latest = realPosts[0];
-        const bodyText = (latest.message && latest.message.trim())
-            ? latest.message
-            : '(โพสต์รูปภาพ/วิดีโอ/สติกเกอร์)';
-
-        const sentTime = latest.date
-            ? new Date(latest.date * 1000).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok', dateStyle: 'short', timeStyle: 'short' })
-            : '';
-
-        const headerInfo = `📱 ดึงจากบัญชี: ${me.firstName || 'Telegram'} (+${me.phone || account.phone})${sentTime ? ` | 🕒 เวลาไทย: ${sentTime}` : ''}\n----------------------------------------\n`;
+        const selectedPosts = realPosts.slice(0, limitCount);
+        const formattedMessages = selectedPosts.map((post, idx) => {
+            const bodyText = (post.message && post.message.trim())
+                ? post.message
+                : '(โพสต์รูปภาพ/วิดีโอ/สติกเกอร์)';
+            const sentTime = post.date
+                ? new Date(post.date * 1000).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok', dateStyle: 'short', timeStyle: 'short' })
+                : '';
+            const label = limitCount > 1 ? `📌 โพสต์ชุดที่ ${idx + 1}` : `📱 บัญชี: ${me.firstName || 'Telegram'} (+${me.phone || account.phone})`;
+            return {
+                id: post.id,
+                text: `${label}${sentTime ? ` | 🕒 ${sentTime}` : ''}\n----------------------------------------\n${bodyText}`
+            };
+        });
 
         return res.json({
             success: true,
-            messages: [{ text: headerInfo + bodyText, id: latest.id }]
+            availableCount: realPosts.length,
+            messages: formattedMessages
         });
     } catch (err) {
         return res.status(500).json({ success: false, message: err.message });
@@ -725,6 +755,7 @@ app.get('/api/status', authenticateUser, (req, res) => {
     const userId = req.user.id;
     const queue = userQueues.get(userId);
     const savedLoopHours = userLoopConfigs.get(userId) || 0;
+    const savedRotateCount = userRotationConfigs.get(userId) || 1;
 
     if (!queue) {
         return res.json({
@@ -738,6 +769,7 @@ app.get('/api/status', authenticateUser, (req, res) => {
                 nextDelay: 0,
                 isPaused: false,
                 loopHours: savedLoopHours,
+                rotateCount: savedRotateCount,
                 isWaitingNextLoop: false,
                 cycleCount: 1
             }
@@ -755,6 +787,7 @@ app.get('/api/status', authenticateUser, (req, res) => {
             nextDelay: queue.nextDelay || 0,
             isPaused: !queue.isRunning && queue.targets.length > 0,
             loopHours: queue.loopHours ?? savedLoopHours,
+            rotateCount: queue.rotateCount ?? savedRotateCount,
             isWaitingNextLoop: Boolean(queue.isWaitingNextLoop),
             cycleCount: queue.cycleCount || 1
         }
@@ -778,19 +811,26 @@ app.get('/api/logs', authenticateUser, async (req, res) => {
     }
 });
 
-// 9. สั่ง RUN คิวการยิงโพสต์พร้อมระบบ Auto-Loop 24 ชม.
+// 9. สั่ง RUN คิวการยิงโพสต์ (รองรับทั้ง Auto-Loop Smart Jitter + สุ่มสลับโพสต์ 1/3/5 ข้อความล่าสุด)
 app.post('/api/run', authenticateUser, requireActiveLicense, async (req, res) => {
     const userId = req.user.id;
-    const { forceRestart, loopHours: reqLoopHours } = req.body || {};
+    const { forceRestart, loopHours: reqLoopHours, rotateCount: reqRotateCount } = req.body || {};
 
     if (typeof reqLoopHours !== 'undefined') {
         userLoopConfigs.set(userId, Math.max(0, parseInt(reqLoopHours, 10) || 0));
     }
+    if (typeof reqRotateCount !== 'undefined') {
+        const validRot = [1, 3, 5].includes(parseInt(reqRotateCount, 10)) ? parseInt(reqRotateCount, 10) : 1;
+        userRotationConfigs.set(userId, validRot);
+    }
+
     const activeLoopHours = userLoopConfigs.get(userId) || 0;
+    const activeRotateCount = userRotationConfigs.get(userId) || 1;
 
     const existingQueue = userQueues.get(userId);
     if (existingQueue && existingQueue.isRunning) {
         existingQueue.loopHours = activeLoopHours;
+        existingQueue.rotateCount = activeRotateCount;
         return res.json({ success: true, message: 'ระบบกำลังทำงานอยู่ในขณะนี้' });
     }
 
@@ -812,6 +852,7 @@ app.post('/api/run', authenticateUser, requireActiveLicense, async (req, res) =>
             queueState.isRunning = true;
             queueState.isWaitingNextLoop = false;
             queueState.loopHours = activeLoopHours;
+            queueState.rotateCount = activeRotateCount;
             isResuming = true;
         } else {
             const { data: allSelectedGroups, error: groupErr } = await supabase
@@ -853,6 +894,7 @@ app.post('/api/run', authenticateUser, requireActiveLicense, async (req, res) =>
                 currentGroup: '-',
                 nextDelay: 0,
                 loopHours: activeLoopHours,
+                rotateCount: activeRotateCount,
                 isWaitingNextLoop: false,
                 cycleCount: 1
             };
@@ -860,6 +902,8 @@ app.post('/api/run', authenticateUser, requireActiveLicense, async (req, res) =>
         }
 
         (async () => {
+            let lastPickedPostId = null;
+
             while (queueState.isRunning) {
                 const licCheck = await checkUserLicenseValid(userId);
                 if (!licCheck.valid) {
@@ -900,15 +944,31 @@ app.post('/api/run', authenticateUser, requireActiveLicense, async (req, res) =>
                         break;
                     }
 
-                    const targetMsgId = realPosts[0].id;
-
                     while (queueState.isRunning && queueState.targets.length > 0) {
                         const target = queueState.targets.shift();
-                        queueState.currentGroup = `[รอบที่ ${queueState.cycleCount}] ${target.group_name}`;
+
+                        // ดึงชุดโพสต์ตามจำนวนที่ตั้งค่าไว้ (1, 3, หรือ 5 โพสต์ล่าสุด)
+                        const currentRotateCount = userRotationConfigs.get(userId) ?? queueState.rotateCount ?? 1;
+                        const postPool = realPosts.slice(0, currentRotateCount);
+
+                        // สุ่มเลือกโพสต์โดยหลีกเลี่ยงโพสต์เดิมที่เพิ่งส่งไปในกลุ่มก่อนหน้า (ถ้ามีให้เลือกมากกว่า 1 โพสต์)
+                        let candidates = postPool;
+                        if (postPool.length > 1 && lastPickedPostId !== null) {
+                            const filtered = postPool.filter(p => p.id !== lastPickedPostId);
+                            if (filtered.length > 0) candidates = filtered;
+                        }
+                        const chosenIndex = Math.floor(Math.random() * candidates.length);
+                        const chosenPost = candidates[chosenIndex];
+                        lastPickedPostId = chosenPost.id;
+
+                        const poolRank = postPool.findIndex(p => p.id === chosenPost.id) + 1;
+                        const postTag = postPool.length > 1 ? ` • โพสต์ชุดที่ ${poolRank}/${postPool.length}` : '';
+
+                        queueState.currentGroup = `[รอบที่ ${queueState.cycleCount}${postTag}] ${target.group_name}`;
 
                         try {
                             await client.forwardMessages(target.group_id, {
-                                messages: [targetMsgId],
+                                messages: [chosenPost.id],
                                 fromPeer: 'me'
                             });
 
@@ -923,7 +983,7 @@ app.post('/api/run', authenticateUser, requireActiveLicense, async (req, res) =>
                                 user_id: userId,
                                 group_name: target.group_name,
                                 status: 'success',
-                                message: `[รอบ ${queueState.cycleCount}] ฟอร์เวิร์ดสำเร็จเข้ากลุ่ม: ${target.group_name}`
+                                message: `[รอบ ${queueState.cycleCount}${postTag}] ฟอร์เวิร์ดสำเร็จเข้ากลุ่ม: ${target.group_name}`
                             });
                         } catch (sendErr) {
                             const errMsg = sendErr.message || '';
@@ -980,16 +1040,16 @@ app.post('/api/run', authenticateUser, requireActiveLicense, async (req, res) =>
 
                     const currentLoopHours = userLoopConfigs.get(userId) ?? queueState.loopHours ?? 0;
 
-                   if (queueState.isRunning && currentLoopHours > 0) {
+                    if (queueState.isRunning && currentLoopHours > 0) {
                         queueState.isWaitingNextLoop = true;
-                        
-                        // เพิ่มความสุ่ม ±20 นาที (1,200 วินาที) เพื่อให้รอบเวลาไม่ซ้ำกันเป๊ะเหมือนบอท
-                        const baseSeconds = currentLoopHours * 3600;
-                        const jitterRange = Math.min(1200, Math.floor(baseSeconds * 0.2)); // สุ่มบวกลบสูงสุด 20% หรือ 20 นาที
-                        const randomJitter = Math.floor(Math.random() * (jitterRange * 2 + 1)) - jitterRange;
-                        const waitSeconds = Math.max(600, baseSeconds + randomJitter); // พักขั้นต่ำอย่างน้อย 10 นาที
 
+                        // สุ่มเวลาพัก ±20% (สูงสุด ±20 นาที) เพื่อให้รอบเวลาไม่ซ้ำกันเป๊ะเหมือนบอท
+                        const baseSeconds = currentLoopHours * 3600;
+                        const jitterRange = Math.min(1200, Math.floor(baseSeconds * 0.2));
+                        const randomJitter = Math.floor(Math.random() * (jitterRange * 2 + 1)) - jitterRange;
+                        const waitSeconds = Math.max(600, baseSeconds + randomJitter);
                         const waitMins = Math.round(waitSeconds / 60);
+
                         queueState.nextDelay = waitSeconds;
                         queueState.currentGroup = `🔁 เสร็จสิ้นรอบที่ ${queueState.cycleCount} • พักแบบสุ่ม ~${waitMins} นาที ก่อนเริ่มรอบที่ ${queueState.cycleCount + 1}`;
 
@@ -999,7 +1059,7 @@ app.post('/api/run', authenticateUser, requireActiveLicense, async (req, res) =>
                             status: 'success',
                             message: `ครบกำหนดรอบที่ ${queueState.cycleCount} ระบบสุ่มพัก ${waitMins} นาที (โหมดเนียนเหมือนคนโพสต์) แล้วจะเริ่มรอบถัดไปอัตโนมัติ`
                         });
-                       
+
                         for (let w = waitSeconds; w > 0; w--) {
                             if (!queueState.isRunning) break;
                             const updatedLoop = userLoopConfigs.get(userId) ?? currentLoopHours;
@@ -1020,7 +1080,6 @@ app.post('/api/run', authenticateUser, requireActiveLicense, async (req, res) =>
                             break;
                         }
 
-                        // เตรียมรายการกลุ่มสำหรับรอบถัดไป
                         const { data: nextGroups } = await supabase
                             .from('groups')
                             .select('*')
@@ -1058,10 +1117,11 @@ app.post('/api/run', authenticateUser, requireActiveLicense, async (req, res) =>
             }
         })().catch(console.error);
 
-        const loopNote = activeLoopHours > 0 ? ` (เปิดโหมด Auto-Loop วนซ้ำทุก ${activeLoopHours} ชม.)` : '';
+        const rotNote = activeRotateCount > 1 ? ` • สุ่มสลับ ${activeRotateCount} โพสต์ล่าสุด` : '';
+        const loopNote = activeLoopHours > 0 ? ` • วนซ้ำทุก ~${activeLoopHours} ชม.` : '';
         const msgText = isResuming
-            ? `ดำเนินการส่งต่อจากงานที่ค้างไว้ (เหลืออีก ${queueState.targets.length} จาก ${queueState.total} กลุ่ม)${loopNote}`
-            : `เริ่มต้นคิวการฟอร์เวิร์ดโพสต์เฉพาะ ${queueState.targets.length} กลุ่มที่เลือกเรียบร้อย${loopNote}`;
+            ? `ดำเนินการส่งต่อจากงานที่ค้างไว้ (เหลืออีก ${queueState.targets.length} จาก ${queueState.total} กลุ่ม)${rotNote}${loopNote}`
+            : `เริ่มต้นคิวการฟอร์เวิร์ดโพสต์เฉพาะ ${queueState.targets.length} กลุ่มที่เลือกเรียบร้อย${rotNote}${loopNote}`;
 
         return res.json({ success: true, message: msgText });
     } catch (err) {
