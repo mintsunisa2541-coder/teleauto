@@ -103,7 +103,20 @@ const randomDelay = (min = 35, max = 85) => {
     return Math.floor(Math.random() * (max - min + 1) + min) * 1000;
 };
 
-// ดึงโพสต์ล่าสุดจริงๆ จาก Saved Messages เสมอ (รองรับทั้งโหมดรวมข้อความ และโหมดแยกหัวข้อย่อย Topics)
+// เช็กสิทธิ์ VIP ระหว่างรัน Auto-Loop
+async function checkLicenseStillValid(userId) {
+    const { data, error } = await supabase
+        .from('licenses')
+        .select('*')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+    if (error || !data || !data.is_active) return false;
+    const exp = new Date(data.expire_at);
+    return !isNaN(exp.getTime()) && new Date() <= exp;
+}
+
+// ดึงโพสต์ล่าสุดจริงๆ จาก Saved Messages เสมอ
 async function getLatestSavedPosts(client) {
     let allMsgs = [];
 
@@ -692,7 +705,19 @@ app.get('/api/status', authenticateUser, (req, res) => {
     if (!queue) {
         return res.json({
             success: true,
-            stats: { sent: 0, failed: 0, remaining: 0, total: 0, currentGroup: '-', nextDelay: 0, isPaused: false }
+            stats: {
+                sent: 0,
+                failed: 0,
+                remaining: 0,
+                total: 0,
+                currentGroup: '-',
+                nextDelay: 0,
+                isPaused: false,
+                loopHours: 0,
+                loopRound: 1,
+                loopWaitSeconds: 0,
+                isRunning: false
+            }
         });
     }
 
@@ -705,7 +730,11 @@ app.get('/api/status', authenticateUser, (req, res) => {
             total: queue.total,
             currentGroup: queue.currentGroup || '-',
             nextDelay: queue.nextDelay || 0,
-            isPaused: !queue.isRunning && queue.targets.length > 0
+            isPaused: !queue.isRunning && queue.targets.length > 0,
+            loopHours: queue.loopHours || 0,
+            loopRound: queue.loopRound || 1,
+            loopWaitSeconds: queue.loopWaitSeconds || 0,
+            isRunning: Boolean(queue.isRunning)
         }
     });
 });
@@ -727,14 +756,21 @@ app.get('/api/logs', authenticateUser, async (req, res) => {
     }
 });
 
-// 9. สั่ง RUN คิวการยิงโพสต์ (Forward ข้อความล่าสุดจาก Saved Messages โดยตรง -> ตารางและอิโมจิพรีเมียมครบ 100%)
+// 9. สั่ง RUN คิวการยิงโพสต์ (รองรับ Auto-Loop 24 ชม. + Forward ตาราง/อิโมจิพรีเมียมครบ 100%)
 app.post('/api/run', authenticateUser, requireActiveLicense, async (req, res) => {
     const userId = req.user.id;
-    const { forceRestart } = req.body || {};
+    const { forceRestart, loopHours } = req.body || {};
+    const parsedLoopHours = Math.max(0, parseFloat(loopHours) || 0);
 
     const existingQueue = userQueues.get(userId);
     if (existingQueue && existingQueue.isRunning) {
-        return res.json({ success: true, message: 'ระบบกำลังทำงานอยู่ในขณะนี้' });
+        existingQueue.loopHours = parsedLoopHours;
+        return res.json({
+            success: true,
+            message: parsedLoopHours > 0
+                ? `ระบบกำลังทำงานอยู่ (อัปเดตโหมดวนลูปอัตโนมัติทุก ${parsedLoopHours} ชม. เรียบร้อย)`
+                : 'ระบบกำลังทำงานอยู่ในขณะนี้'
+        });
     }
 
     try {
@@ -753,6 +789,8 @@ app.post('/api/run', authenticateUser, requireActiveLicense, async (req, res) =>
         if (!forceRestart && existingQueue && existingQueue.targets && existingQueue.targets.length > 0) {
             queueState = existingQueue;
             queueState.isRunning = true;
+            queueState.loopHours = parsedLoopHours;
+            queueState.loopWaitSeconds = 0;
             isResuming = true;
         } else {
             const { data: allSelectedGroups, error: groupErr } = await supabase
@@ -792,118 +830,184 @@ app.post('/api/run', authenticateUser, requireActiveLicense, async (req, res) =>
                 sent: alreadyDone,
                 failed: 0,
                 currentGroup: '-',
-                nextDelay: 0
+                nextDelay: 0,
+                loopHours: parsedLoopHours,
+                loopRound: 1,
+                loopWaitSeconds: 0
             };
             userQueues.set(userId, queueState);
         }
 
         (async () => {
-            const client = new TelegramClient(
-                new StringSession(account.session_string),
-                TELEGRAM_API_ID,
-                TELEGRAM_API_HASH,
-                { connectionRetries: 5 }
-            );
+            while (queueState.isRunning) {
+                // ตรวจสอบสิทธิ์ VIP ทุกรอบก่อนเริ่มยิง
+                const validLic = await checkLicenseStillValid(userId);
+                if (!validLic) {
+                    queueState.isRunning = false;
+                    queueState.currentGroup = '- หยุดทำงานอัตโนมัติ เนื่องจากสิทธิ์ VIP หมดอายุ -';
+                    queueState.nextDelay = 0;
+                    queueState.loopWaitSeconds = 0;
+                    break;
+                }
 
-            await client.connect();
-            const realPosts = await getLatestSavedPosts(client);
-
-            if (realPosts.length === 0) {
-                queueState.isRunning = false;
-                queueState.currentGroup = '- ไม่พบโพสต์ใน Saved Messages กรุณาส่งข้อความหรือรูปใหม่ -';
-                await client.disconnect();
-                return;
-            }
-
-            const targetMsgId = realPosts[0].id;
-
-            while (queueState.isRunning && queueState.targets.length > 0) {
-                const target = queueState.targets.shift();
-                queueState.currentGroup = target.group_name;
-
-                try {
-                    await client.forwardMessages(target.group_id, {
-                        messages: [targetMsgId],
-                        fromPeer: 'me'
-                    });
-
-                    queueState.sent++;
-                    await supabase
+                // ถ้าขึ้นรอบใหม่ของ Auto-Loop ให้ดึงรายชื่อกลุ่มที่เลือกไว้ล่าสุดมาเติมคิวใหม่
+                if (queueState.targets.length === 0 && queueState.loopHours > 0) {
+                    const { data: freshGroups } = await supabase
                         .from('groups')
-                        .update({ last_sent_at: new Date().toISOString() })
+                        .select('*')
                         .eq('user_id', userId)
-                        .eq('group_id', target.group_id);
+                        .eq('is_selected', true)
+                        .order('group_name', { ascending: true });
 
-                    await supabase.from('execution_logs').insert({
-                        user_id: userId,
-                        group_name: target.group_name,
-                        status: 'success',
-                        message: `ฟอร์เวิร์ดสำเร็จ (ตาราง/อิโมจิครบ) เข้ากลุ่ม: ${target.group_name}`
-                    });
-                } catch (sendErr) {
-                    const errMsg = sendErr.message || '';
-                    if (errMsg.includes('TIMEOUT') || errMsg.includes('DISCONNECTED') || errMsg.includes('FLOOD')) {
-                        queueState.targets.unshift(target);
+                    if (!freshGroups || freshGroups.length === 0) {
                         queueState.isRunning = false;
-                        queueState.currentGroup = `- หยุดชั่วคราวเนื่องจากระบบเครือข่าย (${errMsg}) กด RUN เพื่อส่งต่อได้ทันที -`;
-                        await supabase.from('execution_logs').insert({
-                            user_id: userId,
-                            group_name: target.group_name,
-                            status: 'error',
-                            message: `หยุดชั่วคราว (คิวคงเหลือ ${queueState.targets.length} กลุ่ม): ${errMsg}`
-                        });
+                        queueState.currentGroup = '- หยุดทำงานเนื่องจากไม่มีกลุ่มที่เลือกไว้ -';
                         break;
                     }
 
-                    queueState.failed++;
+                    queueState.loopRound = (queueState.loopRound || 1) + 1;
+                    queueState.targets = [...freshGroups];
+                    queueState.total = freshGroups.length;
+                    queueState.sent = 0;
+                    queueState.failed = 0;
+                }
+
+                const client = new TelegramClient(
+                    new StringSession(account.session_string),
+                    TELEGRAM_API_ID,
+                    TELEGRAM_API_HASH,
+                    { connectionRetries: 5 }
+                );
+
+                try {
+                    await client.connect();
+                    const realPosts = await getLatestSavedPosts(client);
+
+                    if (realPosts.length === 0) {
+                        queueState.isRunning = false;
+                        queueState.currentGroup = '- ไม่พบโพสต์ใน Saved Messages กรุณาส่งข้อความหรือรูปใหม่ -';
+                        await client.disconnect();
+                        break;
+                    }
+
+                    const targetMsgId = realPosts[0].id;
+
+                    while (queueState.isRunning && queueState.targets.length > 0) {
+                        const target = queueState.targets.shift();
+                        queueState.currentGroup = `[รอบที่ ${queueState.loopRound}] ${target.group_name}`;
+
+                        try {
+                            await client.forwardMessages(target.group_id, {
+                                messages: [targetMsgId],
+                                fromPeer: 'me'
+                            });
+
+                            queueState.sent++;
+                            await supabase
+                                .from('groups')
+                                .update({ last_sent_at: new Date().toISOString() })
+                                .eq('user_id', userId)
+                                .eq('group_id', target.group_id);
+
+                            await supabase.from('execution_logs').insert({
+                                user_id: userId,
+                                group_name: target.group_name,
+                                status: 'success',
+                                message: `[รอบที่ ${queueState.loopRound}] ฟอร์เวิร์ดสำเร็จเข้ากลุ่ม: ${target.group_name}`
+                            });
+                        } catch (sendErr) {
+                            const errMsg = sendErr.message || '';
+                            if (errMsg.includes('TIMEOUT') || errMsg.includes('DISCONNECTED') || errMsg.includes('FLOOD')) {
+                                queueState.targets.unshift(target);
+                                queueState.isRunning = false;
+                                queueState.currentGroup = `- หยุดชั่วคราวเนื่องจากระบบเครือข่าย (${errMsg}) กด RUN เพื่อส่งต่อได้ทันที -`;
+                                await supabase.from('execution_logs').insert({
+                                    user_id: userId,
+                                    group_name: target.group_name,
+                                    status: 'error',
+                                    message: `หยุดชั่วคราว (คิวคงเหลือ ${queueState.targets.length} กลุ่ม): ${errMsg}`
+                                });
+                                break;
+                            }
+
+                            queueState.failed++;
+                            await supabase
+                                .from('groups')
+                                .update({ last_sent_at: new Date().toISOString() })
+                                .eq('user_id', userId)
+                                .eq('group_id', target.group_id);
+
+                            await supabase.from('execution_logs').insert({
+                                user_id: userId,
+                                group_name: target.group_name,
+                                status: 'error',
+                                message: `[รอบที่ ${queueState.loopRound}] ส่งไม่สำเร็จ: ${errMsg}`
+                            });
+                        }
+
+                        if (queueState.targets.length > 0 && queueState.isRunning) {
+                            const delaySeconds = Math.floor(randomDelay(35, 85) / 1000);
+                            queueState.nextDelay = delaySeconds;
+
+                            for (let s = delaySeconds; s > 0; s--) {
+                                if (!queueState.isRunning) break;
+                                queueState.nextDelay = s;
+                                await new Promise(r => setTimeout(r, 1000));
+                            }
+                        }
+                    }
+                } finally {
+                    await client.disconnect().catch(() => {});
+                }
+
+                // เช็กว่าจบคิวของรอบนี้แล้วหรือยัง
+                if (queueState.targets.length === 0) {
                     await supabase
                         .from('groups')
-                        .update({ last_sent_at: new Date().toISOString() })
+                        .update({ last_sent_at: null })
                         .eq('user_id', userId)
-                        .eq('group_id', target.group_id);
+                        .eq('is_selected', true);
 
-                    await supabase.from('execution_logs').insert({
-                        user_id: userId,
-                        group_name: target.group_name,
-                        status: 'error',
-                        message: `ส่งไม่สำเร็จ: ${errMsg}`
-                    });
-                }
+                    // ถ้าเปิดโหมดวนลูป Auto-Loop 24 ชม. ให้รอตามจำนวนชั่วโมงที่ตั้งไว้แล้ววนรอบใหม่
+                    if (queueState.isRunning && queueState.loopHours > 0) {
+                        const waitSec = Math.round(queueState.loopHours * 3600);
+                        queueState.nextDelay = 0;
+                        queueState.loopWaitSeconds = waitSec;
+                        queueState.currentGroup = `⏳ จบรอบที่ ${queueState.loopRound} แล้ว — รอวนลูปรอบถัดไปอัตโนมัติ (ทุก ${queueState.loopHours} ชม.)`;
 
-                if (queueState.targets.length > 0 && queueState.isRunning) {
-                    const delaySeconds = Math.floor(randomDelay(35, 85) / 1000);
-                    queueState.nextDelay = delaySeconds;
+                        for (let w = waitSec; w > 0; w--) {
+                            if (!queueState.isRunning || queueState.loopHours <= 0) break;
+                            queueState.loopWaitSeconds = w;
+                            await new Promise(r => setTimeout(r, 1000));
+                        }
+                        queueState.loopWaitSeconds = 0;
 
-                    for (let s = delaySeconds; s > 0; s--) {
-                        if (!queueState.isRunning) break;
-                        queueState.nextDelay = s;
-                        await new Promise(r => setTimeout(r, 1000));
+                        if (queueState.isRunning && queueState.loopHours > 0) {
+                            continue; // เริ่มวนลูปรอบถัดไปทันที
+                        }
                     }
+
+                    // จบการทำงานกรณีโหมดยิงรอบเดียว หรือถูกกดหยุดระหว่างรอวนลูป
+                    queueState.isRunning = false;
+                    queueState.currentGroup = '- เสร็จสิ้นรอบการส่งทั้งหมด -';
+                    queueState.nextDelay = 0;
+                    queueState.loopWaitSeconds = 0;
+                    userQueues.delete(userId);
+                    break;
+                } else {
+                    queueState.isRunning = false;
+                    queueState.currentGroup = `- หยุดชั่วคราว (ค้างส่งอีก ${queueState.targets.length} กลุ่ม) -`;
+                    queueState.nextDelay = 0;
+                    queueState.loopWaitSeconds = 0;
+                    break;
                 }
             }
-
-            if (queueState.targets.length === 0) {
-                queueState.isRunning = false;
-                queueState.currentGroup = '- เสร็จสิ้นรอบการส่งทั้งหมด -';
-                queueState.nextDelay = 0;
-                userQueues.delete(userId);
-                await supabase
-                    .from('groups')
-                    .update({ last_sent_at: null })
-                    .eq('user_id', userId)
-                    .eq('is_selected', true);
-            } else {
-                queueState.isRunning = false;
-                queueState.currentGroup = `- หยุดชั่วคราว (ค้างส่งอีก ${queueState.targets.length} กลุ่ม) -`;
-                queueState.nextDelay = 0;
-            }
-
-            await client.disconnect();
         })().catch(console.error);
 
+        const loopNote = parsedLoopHours > 0 ? ` [โหมดวนลูปอัตโนมัติทุก ${parsedLoopHours} ชม.]` : ' [โหมดยิงรอบเดียว]';
         const msgText = isResuming
-            ? `ดำเนินการส่งต่อจากงานที่ค้างไว้ (เหลืออีก ${queueState.targets.length} จาก ${queueState.total} กลุ่ม)`
-            : `เริ่มต้นคิวการฟอร์เวิร์ดโพสต์เฉพาะ ${queueState.targets.length} กลุ่มที่เลือกเรียบร้อย`;
+            ? `ดำเนินการส่งต่อจากงานที่ค้างไว้ (เหลืออีก ${queueState.targets.length} จาก ${queueState.total} กลุ่ม)${loopNote}`
+            : `เริ่มต้นคิวการฟอร์เวิร์ดโพสต์เฉพาะ ${queueState.targets.length} กลุ่มที่เลือกเรียบร้อย${loopNote}`;
 
         return res.json({ success: true, message: msgText });
     } catch (err) {
@@ -917,7 +1021,10 @@ app.post('/api/stop', authenticateUser, (req, res) => {
 
     if (queue) {
         queue.isRunning = false;
-        queue.currentGroup = `- หยุดชั่วคราว (ค้างส่งอีก ${queue.targets.length} กลุ่ม) -`;
+        queue.loopWaitSeconds = 0;
+        queue.currentGroup = queue.targets.length > 0
+            ? `- หยุดชั่วคราว (ค้างส่งอีก ${queue.targets.length} กลุ่ม) -`
+            : '- หยุดระบบวนลูปอัตโนมัติเรียบร้อย -';
         queue.nextDelay = 0;
     }
 
@@ -925,7 +1032,7 @@ app.post('/api/stop', authenticateUser, (req, res) => {
         success: true,
         message: queue && queue.targets.length > 0
             ? `หยุดการทำงานชั่วคราว (ค้างอีก ${queue.targets.length} กลุ่ม กด RUN เพื่อส่งต่อได้ทันที)`
-            : 'สั่งหยุดการทำงานเรียบร้อย'
+            : 'สั่งหยุดการทำงานและปิดระบบวนลูปเรียบร้อย'
     });
 });
 
