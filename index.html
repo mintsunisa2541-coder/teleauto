@@ -714,12 +714,12 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 12px 16px;
+            padding: 11px 16px;
             border-radius: 14px;
             color: var(--text-muted);
-            font-size: 14px;
+            font-size: 13.5px;
             font-weight: 500;
-            margin-bottom: 6px;
+            margin-bottom: 5px;
             cursor: pointer;
             border: none;
             background: transparent;
@@ -1179,7 +1179,7 @@
 
         .log-table {
             width: 100%;
-            min-width: 560px;
+            min-width: 640px;
             border-collapse: collapse;
             font-size: 13px;
         }
@@ -1255,7 +1255,7 @@
                 right: 0;
                 width: 100%;
                 height: 68px;
-                padding: 4px 4px;
+                padding: 4px 2px;
                 border-right: none;
                 border-top: 1px solid #e2e8f0;
                 box-shadow: 0 -4px 20px rgba(15, 23, 42, 0.06);
@@ -1280,7 +1280,7 @@
                 justify-content: space-around;
                 align-items: center;
                 width: 100%;
-                gap: 1px;
+                gap: 0px;
             }
 
             .nav-item {
@@ -1299,12 +1299,12 @@
                 display: flex;
                 flex-direction: column;
                 align-items: center;
-                font-size: 9.5px;
+                font-size: 9px;
                 line-height: 1.15;
             }
 
             .nav-mobile-icon {
-                font-size: 17px;
+                font-size: 16px;
                 margin-bottom: 2px;
             }
 
@@ -1629,6 +1629,10 @@
                     <span class="nav-desktop-label">💎 แพ็กเกจราคา & ต่ออายุ</span>
                     <span class="nav-mobile-label"><span class="nav-mobile-icon">💎</span>แพ็กเกจ</span>
                 </button>
+                <button id="nav-password" class="nav-item" onclick="switchPage('password')">
+                    <span class="nav-desktop-label">🔐 เปลี่ยนรหัสผ่าน</span>
+                    <span class="nav-mobile-label"><span class="nav-mobile-icon">🔐</span>รหัสผ่าน</span>
+                </button>
                 <button id="nav-admin" class="nav-item" onclick="switchPage('admin')" style="display: none; border: 1px dashed #d8b4fe; color: #7e22ce;">
                     <span class="nav-desktop-label">👑 จัดการสมาชิก (Admin)</span>
                     <span class="nav-mobile-label"><span class="nav-mobile-icon">👑</span>แอดมิน</span>
@@ -1769,7 +1773,7 @@
             <div class="card-header">
                 <div>
                     <h3 style="font-size: 18px; font-weight: 700;">👑 ระบบจัดการสมาชิก & อนุมัติวันใช้งาน</h3>
-                    <p style="font-size: 12px; color: var(--text-muted);">เลื่อนตารางไปทางขวาเพื่อกดปุ่มอนุมัติวันใช้งานให้ลูกค้าได้ทันที</p>
+                    <p style="font-size: 12px; color: var(--text-muted);">เลื่อนตารางไปทางขวาเพื่อกดปุ่มอนุมัติวันใช้งาน ระงับสิทธิ์ หรือรีเซ็ตรหัสผ่านให้ลูกค้าได้ทันที</p>
                 </div>
                 <div class="group-toolbar">
                     <input type="search" id="adminSearchInput" class="group-search-box" autocomplete="off" oninput="filterAdminUsers()" placeholder="🔍 ค้นหาชื่อผู้ใช้หรือเบอร์...">
@@ -1785,7 +1789,7 @@
                             <th>บัญชี Telegram</th>
                             <th>สถานะสิทธิ์</th>
                             <th>วันหมดอายุ</th>
-                            <th>อนุมัติ / เพิ่มวันใช้งาน</th>
+                            <th>อนุมัติ / จัดการสมาชิก</th>
                         </tr>
                     </thead>
                     <tbody id="adminUsersTableBody">
@@ -1806,7 +1810,7 @@
                 </div>
             </div>
 
-<div class="pricing-grid">
+            <div class="pricing-grid">
                 <div class="price-card">
                     <div>
                         <div style="font-size: 14px; font-weight: 700; color: var(--text-muted);">STARTER • 7 วัน</div>
@@ -1854,6 +1858,28 @@
                     <a translate="no" href="https://t.me/huimin168" target="_blank" class="price-btn">สมัครแพ็กเกจ 90 วัน (@huimin168)</a>
                 </div>
             </div>
+        </section>
+
+        <!-- SECTION: เปลี่ยนรหัสผ่าน (User Self-Service) -->
+        <section id="sec-password" class="content-card" style="display: none;">
+            <div class="card-header">
+                <div>
+                    <h3 style="font-size: 18px; font-weight: 700;">🔐 เปลี่ยนรหัสผ่านเข้าใช้งาน</h3>
+                    <p style="font-size: 12px; color: var(--text-muted);">ตั้งรหัสผ่านใหม่สำหรับบัญชีของคุณ (อย่างน้อย 6 ตัวอักษร)</p>
+                </div>
+            </div>
+
+            <form onsubmit="handleChangeOwnPassword(event)" style="max-width: 420px;">
+                <div class="input-group">
+                    <label class="input-label">รหัสผ่านใหม่ (New Password)</label>
+                    <input type="password" id="newOwnPassword" class="input-control" placeholder="กรอกรหัสผ่านใหม่ 6 ตัวขึ้นไป" required>
+                </div>
+                <div class="input-group">
+                    <label class="input-label">ยืนยันรหัสผ่านใหม่อีกครั้ง</label>
+                    <input type="password" id="confirmOwnPassword" class="input-control" placeholder="กรอกรหัสผ่านใหม่อีกครั้ง" required>
+                </div>
+                <button type="submit" id="btnChangeOwnPass" class="btn-submit">💾 บันทึกรหัสผ่านใหม่</button>
+            </form>
         </section>
 
         <!-- SECTION: จัดการโพสต์ -->
@@ -2303,7 +2329,7 @@
             const activeBtn = document.getElementById(`nav-${page}`);
             if (activeBtn) activeBtn.classList.add('active');
 
-            const sections = ['sec-banner', 'sec-tutorial', 'sec-posts', 'sec-accounts', 'sec-groups', 'sec-queue', 'sec-pricing', 'sec-admin'];
+            const sections = ['sec-banner', 'sec-tutorial', 'sec-posts', 'sec-accounts', 'sec-groups', 'sec-queue', 'sec-pricing', 'sec-password', 'sec-admin'];
             sections.forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.style.display = 'none';
@@ -2328,6 +2354,10 @@
                 refreshQueueAndLogs();
             } else if (page === 'pricing') {
                 document.getElementById('sec-pricing').style.display = 'block';
+            } else if (page === 'password') {
+                document.getElementById('sec-password').style.display = 'block';
+                document.getElementById('newOwnPassword').value = '';
+                document.getElementById('confirmOwnPassword').value = '';
             } else if (page === 'admin') {
                 document.getElementById('sec-admin').style.display = 'block';
                 loadAdminUsers();
@@ -2523,6 +2553,64 @@
             }
         }
 
+        // ================= PASSWORD MANAGEMENT =================
+        async function handleChangeOwnPassword(event) {
+            event.preventDefault();
+            const newPass = document.getElementById('newOwnPassword').value.trim();
+            const confirmPass = document.getElementById('confirmOwnPassword').value.trim();
+            const btn = document.getElementById('btnChangeOwnPass');
+
+            if (newPass.length < 6) {
+                alert('รหัสผ่านใหม่ต้องมีอย่างน้อย 6 ตัวอักษร');
+                return;
+            }
+            if (newPass !== confirmPass) {
+                alert('รหัสผ่านใหม่ทั้ง 2 ช่องไม่ตรงกัน กรุณาตรวจสอบอีกครั้ง');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerText = 'กำลังบันทึก...';
+
+            try {
+                const { error } = await supabaseClient.auth.updateUser({ password: newPass });
+                if (error) throw error;
+
+                alert('✅ เปลี่ยนรหัสผ่านเรียบร้อยแล้ว! กรุณาใช้รหัสผ่านใหม่ในการเข้าสู่ระบบครั้งถัดไป');
+                document.getElementById('newOwnPassword').value = '';
+                document.getElementById('confirmOwnPassword').value = '';
+            } catch (e) {
+                alert('เกิดข้อผิดพลาด: ' + e.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = '💾 บันทึกรหัสผ่านใหม่';
+            }
+        }
+
+        async function adminResetPassword(targetUserId, username) {
+            const newPassword = prompt(`ตั้งรหัสผ่านใหม่ให้กับสมาชิก "${username}" (อย่างน้อย 6 ตัวอักษร):`);
+            if (!newPassword) return;
+            if (newPassword.trim().length < 6) {
+                alert('รหัสผ่านใหม่ต้องมีอย่างน้อย 6 ตัวอักษร');
+                return;
+            }
+
+            try {
+                const headers = await getAuthHeader();
+                const res = await fetch(`${BACKEND_URL}/api/admin/reset-password`, {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify({ targetUserId, newPassword: newPassword.trim() })
+                });
+                const result = await res.json();
+                if (!result.success) throw new Error(result.error);
+
+                alert(`✅ เปลี่ยนรหัสผ่านให้ "${username}" เป็น "${newPassword.trim()}" เรียบร้อยแล้ว!`);
+            } catch (e) {
+                alert('เกิดข้อผิดพลาด: ' + e.message);
+            }
+        }
+
         // ================= ADMIN FUNCTIONS =================
         async function loadAdminUsers() {
             const tbody = document.getElementById('adminUsersTableBody');
@@ -2571,6 +2659,7 @@
                                 <button class="btn-grant" style="background: #dcfce7; color: #15803d;" onclick="adminGrantDays('${u.id}', '${u.username}', 30, 'PRO_30D')">+30 วัน</button>
                                 <button class="btn-grant" style="background: #fef3c7; color: #b45309;" onclick="adminGrantDays('${u.id}', '${u.username}', 90, 'VIP_90D')">+90 วัน</button>
                                 <button class="btn-grant" style="background: #fee2e2; color: #b91c1c;" onclick="adminRevokeUser('${u.id}', '${u.username}')">ระงับ</button>
+                                <button class="btn-grant" style="background: #f1f5f9; color: #334155;" onclick="adminResetPassword('${u.id}', '${u.username}')">🔑 รีเซ็ตรหัส</button>
                             </div>
                         </td>
                     </tr>
