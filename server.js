@@ -318,6 +318,25 @@ app.post('/api/admin/revoke-license', authenticateUser, requireAdmin, async (req
     }
 });
 
+app.post('/api/admin/reset-password', authenticateUser, requireAdmin, async (req, res) => {
+    const { targetUserId, newPassword } = req.body;
+    if (!targetUserId || !newPassword || newPassword.trim().length < 6) {
+        return res.status(400).json({ success: false, error: 'รหัสผ่านใหม่ต้องมีอย่างน้อย 6 ตัวอักษร' });
+    }
+
+    try {
+        const { error } = await supabase.auth.admin.updateUserById(targetUserId, {
+            password: newPassword.trim()
+        });
+
+        if (error) throw error;
+
+        return res.json({ success: true, message: 'เปลี่ยนรหัสผ่านให้สมาชิกเรียบร้อยแล้ว' });
+    } catch (err) {
+        return res.status(500).json({ success: false, error: err.message });
+    }
+});
+
 // ================= TELEGRAM & QUEUE API =================
 
 app.post('/api/telegram/send-code', authenticateUser, async (req, res) => {
@@ -803,7 +822,6 @@ app.post('/api/run', authenticateUser, requireActiveLicense, async (req, res) =>
                 queueState.currentGroup = target.group_name;
 
                 try {
-                    // Forward โพสต์ล่าสุดจาก Saved Messages ('me') โดยตรงเพื่อรักษาตารางและอิโมจิพรีเมียม 100%
                     await client.forwardMessages(target.group_id, {
                         messages: [targetMsgId],
                         fromPeer: 'me'
