@@ -90,7 +90,7 @@ async function requireActiveLicense(req, res, next) {
         if (!data || !data.is_active) {
             return res.status(403).json({
                 success: false,
-                message: 'บัญชีของคุณยังไม่ได้รับการอนุมัติสิทธิ์ใช้งาน กรุณาติดต่อผู้ดูแล @huimin168 เพื่อเปิดสิทธิ์ (ทดลองใช้ฟรี 3 วัน)'
+                message: 'บัญชีของคุณยังไม่ได้รับการอนุมัติสิทธิ์ใช้งาน กรุณาติดต่อผู้ดูแล @huimin168 เพื่อเปิดสิทธิ์ (ทดลองใช้ฟรี 1 วัน / 24 ชม.)'
             });
         }
 
@@ -178,7 +178,6 @@ async function getLatestSavedPosts(client) {
         return b.id - a.id;
     });
 }
-
 app.get('/api/license/status', authenticateUser, async (req, res) => {
     const userId = req.user.id;
     try {
@@ -194,7 +193,7 @@ app.get('/api/license/status', authenticateUser, async (req, res) => {
             return res.json({
                 valid: false,
                 isAdmin: req.isAdmin,
-                message: 'รออนุมัติสิทธิ์ (ติดต่อ @huimin168 เพื่อเปิดฟรี 3 วัน)'
+                message: 'รออนุมัติสิทธิ์ (ติดต่อ @huimin168 เพื่อเปิดฟรี 1 วัน / 24 ชม.)'
             });
         }
 
@@ -336,7 +335,7 @@ app.post('/api/admin/grant-license', authenticateUser, requireAdmin, async (req,
 
         return res.json({
             success: true,
-            message: `อนุมัติเพิ่ม ${numDays} วันเรียบร้อย (หมดอายุ: ${newExpire.toLocaleDateString('th-TH')})`
+            message: `อนุมัติเพิ่ม ${numDays} วันเรียบร้อย (หมดอายุ: ${newExpire.toLocaleDateString('th-TH')} ${newExpire.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })})`
         });
     } catch (err) {
         return res.status(500).json({ success: false, error: err.message });
@@ -695,7 +694,6 @@ app.post('/api/queue/reset', authenticateUser, async (req, res) => {
     }
 });
 
-// พรีวิวโพสต์ล่าสุด (ดึงได้สูงสุด 5 โพสต์ล่าสุดสำหรับโหมดสุ่มสลับโพสต์)
 app.get('/api/telegram/saved-messages', authenticateUser, async (req, res) => {
     const userId = req.user.id;
     const limitCount = Math.min(5, Math.max(1, parseInt(req.query.count, 10) || 1));
@@ -750,7 +748,6 @@ app.get('/api/telegram/saved-messages', authenticateUser, async (req, res) => {
         return res.status(500).json({ success: false, message: err.message });
     }
 });
-
 app.get('/api/status', authenticateUser, (req, res) => {
     const userId = req.user.id;
     const queue = userQueues.get(userId);
@@ -811,7 +808,6 @@ app.get('/api/logs', authenticateUser, async (req, res) => {
     }
 });
 
-// 9. สั่ง RUN คิวการยิงโพสต์ (รองรับทั้ง Auto-Loop Smart Jitter + สุ่มสลับโพสต์ 1/3/5 ข้อความล่าสุด)
 app.post('/api/run', authenticateUser, requireActiveLicense, async (req, res) => {
     const userId = req.user.id;
     const { forceRestart, loopHours: reqLoopHours, rotateCount: reqRotateCount } = req.body || {};
@@ -947,11 +943,9 @@ app.post('/api/run', authenticateUser, requireActiveLicense, async (req, res) =>
                     while (queueState.isRunning && queueState.targets.length > 0) {
                         const target = queueState.targets.shift();
 
-                        // ดึงชุดโพสต์ตามจำนวนที่ตั้งค่าไว้ (1, 3, หรือ 5 โพสต์ล่าสุด)
                         const currentRotateCount = userRotationConfigs.get(userId) ?? queueState.rotateCount ?? 1;
                         const postPool = realPosts.slice(0, currentRotateCount);
 
-                        // สุ่มเลือกโพสต์โดยหลีกเลี่ยงโพสต์เดิมที่เพิ่งส่งไปในกลุ่มก่อนหน้า (ถ้ามีให้เลือกมากกว่า 1 โพสต์)
                         let candidates = postPool;
                         if (postPool.length > 1 && lastPickedPostId !== null) {
                             const filtered = postPool.filter(p => p.id !== lastPickedPostId);
@@ -1030,7 +1024,6 @@ app.post('/api/run', authenticateUser, requireActiveLicense, async (req, res) =>
                     await client.disconnect().catch(() => {});
                 }
 
-                // ตรวจสอบเมื่อส่งครบทุกกลุ่มในรอบปัจจุบัน
                 if (queueState.targets.length === 0) {
                     await supabase
                         .from('groups')
@@ -1043,7 +1036,6 @@ app.post('/api/run', authenticateUser, requireActiveLicense, async (req, res) =>
                     if (queueState.isRunning && currentLoopHours > 0) {
                         queueState.isWaitingNextLoop = true;
 
-                        // สุ่มเวลาพัก ±20% (สูงสุด ±20 นาที) เพื่อให้รอบเวลาไม่ซ้ำกันเป๊ะเหมือนบอท
                         const baseSeconds = currentLoopHours * 3600;
                         const jitterRange = Math.min(1200, Math.floor(baseSeconds * 0.2));
                         const randomJitter = Math.floor(Math.random() * (jitterRange * 2 + 1)) - jitterRange;
