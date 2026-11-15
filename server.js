@@ -178,6 +178,30 @@ async function getLatestSavedPosts(client) {
         return b.id - a.id;
     });
 }
+// บังคับสร้างสถานะรออนุมัติทันทีหลังสมัครสมาชิกใหม่ (ป้องกันการได้สิทธิ์ฟรีอัตโนมัติ)
+app.post('/api/auth/register-pending', authenticateUser, async (req, res) => {
+    const userId = req.user.id;
+    try {
+        const { data: existing } = await supabase
+            .from('licenses')
+            .select('user_id')
+            .eq('user_id', userId)
+            .maybeSingle();
+
+        if (!existing) {
+            await supabase.from('licenses').insert({
+                user_id: userId,
+                is_active: false,
+                plan_type: 'PENDING_APPROVAL',
+                expire_at: new Date(0).toISOString(),
+                updated_at: new Date().toISOString()
+            });
+        }
+        return res.json({ success: true, message: 'บันทึกสถานะรออนุมัติเรียบร้อย' });
+    } catch (err) {
+        return res.status(500).json({ success: false, error: err.message });
+    }
+});
 app.get('/api/license/status', authenticateUser, async (req, res) => {
     const userId = req.user.id;
     try {
@@ -189,12 +213,33 @@ app.get('/api/license/status', authenticateUser, async (req, res) => {
 
         if (error) throw error;
 
-        if (!data || !data.is_active) {
+        if (!data || data.is_active !== true) {
             return res.json({
                 valid: false,
                 isAdmin: req.isAdmin,
                 message: 'รออนุมัติสิทธิ์ (ติดต่อ @huimin168 เพื่อเปิดฟรี 1 วัน / 24 ชม.)'
             });
+        }
+
+        const expireDate = new Date(data.expire_at);
+        if (isNaN(expireDate.getTime()) || new Date() > expireDate) {
+            return res.json({
+                valid: false,
+                isAdmin: req.isAdmin,
+                message: 'สิทธิ์หมดอายุแล้ว (ติดต่อ @huimin168)'
+            });
+        }
+
+        return res.json({
+            valid: true,
+            isAdmin: req.isAdmin,
+            expireDate: data.expire_at,
+            plan: data.plan_type || 'VIP'
+        });
+    } catch (err) {
+        return res.status(500).json({ valid: false, isAdmin: req.isAdmin, message: err.message });
+    }
+});
         }
 
         const expireDate = new Date(data.expire_at);
