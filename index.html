@@ -402,9 +402,9 @@
                     </div>
                 </div>
             </div>
-
-            <div class="cta-footer">
-                <div style="font-size: 12.5px; font-weight: 800; color: #fef08a;">🎁 แจกสิทธิ์ทดลองใช้ฟรี 3 วันเต็ม!</div>
+        
+                <div class="cta-footer">
+                <div style="font-size: 12.5px; font-weight: 800; color: #fef08a;">🎁 แจกสิทธิ์ทดลองใช้ฟรี 1 วันเต็ม (24 ชม.)!</div>
                 <div style="font-size: 11.5px; margin-top: 2px;">ติดต่อผู้ดูแล Telegram: <strong style="background: #fff; color: #9333ea; padding: 1px 7px; border-radius: 6px;">@huimin168</strong></div>
                 <button type="button" class="btn-enter-auth" onclick="finishIntroToAuth()">เข้าสู่ระบบ / สมัครสมาชิกทันที 🚀</button>
             </div>
@@ -428,10 +428,10 @@
             </div>
 
             <div id="registerOwnerNotice" class="owner-notice-box" style="display: none;">
-                <strong>👑 สิทธิ์ทดลองใช้ฟรี 3 วัน (ติดต่อที่เจ้าของเท่านั้น)</strong><br>
+                <strong>👑 สิทธิ์ทดลองใช้ฟรี 1 วัน / 24 ชม. (ติดต่อที่เจ้าของเท่านั้น)</strong><br>
                 <span>• หลังสมัครสมาชิก กรุณาแจ้งชื่อผู้ใช้กับผู้ดูแลเพื่ออนุมัติแพ็กเกจฟรีก่อนเริ่มใช้งาน</span><br>
                 <span>• 7 วัน: <strong>290 ฿</strong> | 30 วัน: <strong>890 ฿</strong> | 90 วัน: <strong>2,190 ฿</strong></span><br>
-                <button type="button" onclick="openSellerTelegram('ขอรับสิทธิ์ทดลองใช้ฟรี 3 วัน')" class="owner-contact-link">💬 ติดต่อผู้ดูแล Telegram: @huimin168</button>
+                <button type="button" onclick="openSellerTelegram('ขอรับสิทธิ์ทดลองใช้ฟรี 1 วัน (24 ชม.)')" class="owner-contact-link">💬 ติดต่อผู้ดูแล Telegram: @huimin168</button>
             </div>
 
             <form id="authForm" onsubmit="handleAuth(event)">
@@ -543,18 +543,19 @@
                 <button onclick="handleLogout()" class="btn-logout">ออกจากระบบ</button>
             </div>
         </header>
-
+        
         <!-- กล่องแจ้งเตือนรออนุมัติสิทธิ์จากแอดมิน -->
         <div id="pendingApprovalBox" class="pending-approval-box">
             <div class="pending-title">🔒 บัญชีของคุณยังไม่ได้รับการอนุมัติแพ็กเกจ (รออนุมัติสิทธิ์ใช้งาน)</div>
             <div class="pending-desc">
-                หลังสมัครสมาชิก กรุณาแจ้งชื่อผู้ใช้ <strong translate="no" id="pendingUsernameText" style="background: rgba(244,63,94,0.18); padding: 2px 8px; border-radius: 6px;">-</strong> ให้ผู้ดูแลระบบทราบ เพื่อกดอนุมัติ <strong>แพ็กเกจทดลองใช้ฟรี 3 วัน</strong> ก่อนจึงจะสามารถเชื่อมต่อบัญชี ดึงกลุ่ม และสั่งยิงโพสต์ได้ครับ
+                หลังสมัครสมาชิก กรุณาแจ้งชื่อผู้ใช้ <strong translate="no" id="pendingUsernameText" style="background: rgba(244,63,94,0.18); padding: 2px 8px; border-radius: 6px;">-</strong> ให้ผู้ดูแลระบบทราบ เพื่อกดอนุมัติ <strong>แพ็กเกจทดลองใช้ฟรี 1 วัน (24 ชม.)</strong> ก่อนจึงจะสามารถเชื่อมต่อบัญชี ดึงกลุ่ม และสั่งยิงโพสต์ได้ครับ
             </div>
             <div class="pending-actions">
                 <button type="button" class="btn-copy-user" onclick="copyPendingUsername()">📋 คัดลอกชื่อผู้ใช้ของฉัน</button>
-                <button type="button" onclick="openSellerTelegram('ขออนุมัติแพ็กเกจทดลองใช้ฟรี 3 วัน')" class="btn-contact-admin-urgent">💬 ทักแชทผู้ดูแล @huimin168 เพื่อขออนุมัติฟรี 3 วัน</button>
+                <button type="button" onclick="openSellerTelegram('ขออนุมัติแพ็กเกจทดลองใช้ฟรี 1 วัน (24 ชม.)')" class="btn-contact-admin-urgent">💬 ทักแชทผู้ดูแล @huimin168 เพื่อขออนุมัติฟรี 1 วัน</button>
                 <button type="button" class="btn-copy-user" style="color: #10b981; border-color: #10b981;" onclick="loadUserLicense()">🔄 เช็กสถานะอนุมัติอีกครั้ง</button>
             </div>
+        </div>
         </div>
 
         <!-- กล่องตั้งค่า Smart Anti-Ban: สุ่มสลับโพสต์ + Auto-Loop 24 ชม. -->
@@ -585,23 +586,23 @@
         </div>
 
         <!-- BANNER -->
-        <section id="sec-banner" class="promo-banner">
+       <section id="sec-banner" class="promo-banner">
             <div class="banner-pill">👑 EXCLUSIVE TRIAL — ติดต่อที่เจ้าของเท่านั้น</div>
-            <h2 style="font-size: 24px; font-weight: 800; margin-bottom: 8px;">ทดลองใช้ฟรี 3 วันเต็ม! ติดต่อรับสิทธิ์ที่เจ้าของระบบเท่านั้น</h2>
+            <h2 style="font-size: 24px; font-weight: 800; margin-bottom: 8px;">ทดลองใช้ฟรี 1 วัน (24 ชม.)! ติดต่อรับสิทธิ์ที่เจ้าของระบบเท่านั้น</h2>
             <p style="font-size: 13px; opacity: 0.95; max-width: 580px; line-height: 1.6;">
                 ระบบบอทยิงโพสต์เข้ากลุ่มอัตโนมัติบนคลาวด์ 24 ชม. สุ่มสลับ 3–5 โพสต์จาก Saved Messages พร้อมตารางและอิโมจิพรีเมียมครบ 100% + สุ่มหน่วงเวลา 35–85 วิ
             </p>
             <div class="badge-tags">
-                <button type="button" onclick="openSellerTelegram('ขอรับสิทธิ์ทดลองใช้ฟรี 3 วัน')" class="banner-cta-btn">💬 ติดต่อผู้ดูแล @huimin168 (รับสิทธิ์ฟรี 3 วัน)</button>
+                <button type="button" onclick="openSellerTelegram('ขอรับสิทธิ์ทดลองใช้ฟรี 1 วัน (24 ชม.)')" class="banner-cta-btn">💬 ติดต่อผู้ดูแล @huimin168 (รับสิทธิ์ฟรี 1 วัน)</button>
                 <button onclick="switchPage('tutorial')" class="banner-cta-btn" style="background: #fef08a; color: #854d0e;">🎬 ดูวิดีโอสอนใช้งาน 4 ขั้นตอน</button>
                 <button onclick="switchPage('pricing')" class="banner-cta-btn" style="background: rgba(255,255,255,0.22); color: #ffffff; backdrop-filter: blur(6px);">💎 ดูแพ็กเกจราคาทั้งหมด</button>
             </div>
             <div class="banner-gift">
                 <div>👑</div>
-                <span style="font-size: 11px; font-weight: 800; line-height: 1.2; margin-top: 4px;">ฟรี 3 วัน<br>ติดต่อเจ้าของ</span>
+                <span style="font-size: 11px; font-weight: 800; line-height: 1.2; margin-top: 4px;">ฟรี 1 วัน<br>24 ชม.</span>
             </div>
         </section>
-
+        
         <!-- SECTION: วิดีโอแนะนำการใช้งาน -->
         <section id="sec-tutorial" class="content-card" style="display: none;">
             <div class="card-header">
