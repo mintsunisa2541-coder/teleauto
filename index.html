@@ -1218,17 +1218,17 @@
             }
         }
 
-        function switchAuthTab(mode) {
+            function switchAuthTab(mode) {
             authMode = mode;
             const isLogin = mode === 'login';
             document.getElementById('tabLogin').classList.toggle('active', isLogin);
             document.getElementById('tabRegister').classList.toggle('active', !isLogin);
             document.getElementById('registerOwnerNotice').style.display = isLogin ? 'none' : 'block';
             document.getElementById('authErrorMsg').style.display = 'none';
-            document.getElementById('authSubmitBtn').innerText = isLogin ? 'เข้าสู่ระบบ' : 'สมัครสมาชิก (ติดต่อ @huimin168 เพื่อขออนุมัติฟรี 3 วัน)';
+            document.getElementById('authSubmitBtn').innerText = isLogin ? 'เข้าสู่ระบบ' : 'สมัครสมาชิก (ติดต่อ @huimin168 เพื่อขออนุมัติฟรี 1 วัน)';
         }
 
-        async function handleAuth(event) {
+async function handleAuth(event) {
             event.preventDefault();
             const rawUsername = document.getElementById('authEmail').value.trim().toLowerCase().replace(/[^a-z0-9._-]/g, '');
             const password = document.getElementById('authPassword').value.trim();
@@ -1253,8 +1253,19 @@
                     if (error) throw new Error(error.message.includes('already registered') ? `ชื่อผู้ใช้ "${rawUsername}" มีคนใช้งานแล้ว` : error.message);
                     if (!data.session) throw new Error('สมัครสมาชิกสำเร็จแล้ว กรุณาแจ้ง @huimin168 เพื่อเปิดสิทธิ์');
                     currentUser = data.user;
-                    alert(`สมัครสมาชิกชื่อ "${rawUsername}" เรียบร้อยแล้ว!\n\n⚠️ บัญชีของคุณอยู่ในสถานะ "รออนุมัติ" กรุณาทักแชทผู้ดูแล @huimin168 เพื่อขออนุมัติแพ็กเกจฟรี 3 วันก่อนจึงจะเริ่มใช้งานได้ครับ`);
+                    alert(`สมัครสมาชิกชื่อ "${rawUsername}" เรียบร้อยแล้ว!\n\n⚠️ บัญชีของคุณอยู่ในสถานะ "รออนุมัติ" กรุณาทักแชทผู้ดูแล @huimin168 เพื่อขออนุมัติแพ็กเกจฟรี 1 วัน (24 ชม.) ก่อนจึงจะเริ่มใช้งานได้ครับ`);
                 }
+                showAppUI();
+                await Promise.all([loadUserLicense(), loadUserAccounts(), loadUserGroups(), fetchQueueStatus()]);
+                startStatusPolling();
+            } catch (err) {
+                authErrorMsg.innerText = err.message || 'เกิดข้อผิดพลาดในการตรวจสอบสิทธิ์';
+                authErrorMsg.style.display = 'block';
+            } finally {
+                authSubmitBtn.disabled = false;
+                authSubmitBtn.innerText = authMode === 'login' ? 'เข้าสู่ระบบ' : 'สมัครสมาชิก (ติดต่อ @huimin168 เพื่อขออนุมัติฟรี 1 วัน)';
+            }
+        }
                 showAppUI();
                 await Promise.all([loadUserLicense(), loadUserAccounts(), loadUserGroups(), fetchQueueStatus()]);
                 startStatusPolling();
@@ -1297,9 +1308,9 @@
         function copyPendingUsername() {
             if (!currentUser) return;
             const uname = currentUser.email.split('@')[0];
-            navigator.clipboard.writeText(uname).then(() => alert(`คัดลอกชื่อผู้ใช้ "${uname}" เรียบร้อยแล้ว! ส่งให้ผู้ดูแล @huimin168 ได้เลยครับ`)).catch(() => alert(`ชื่อผู้ใช้ของคุณคือ: ${uname}`));
+            navigator.clipboard.writeText(uname).then(() => alert(`คัดลอกชื่อผู้ใช้ "${uname}" เรียบร้อยแล้ว! ส่งให้ผู้ดูแล @huimin168 เพื่อเปิดสิทธิ์ฟรี 1 วัน (24 ชม.) ได้เลยครับ`)).catch(() => alert(`ชื่อผู้ใช้ของคุณคือ: ${uname}`));
         }
-
+        
         async function getAuthHeader() {
             const { data: { session }, error } = await supabaseClient.auth.getSession();
             if (error || !session || !session.access_token) {
@@ -1396,7 +1407,7 @@
                     <td><span class="${isValid ? 'status-badge-ok' : 'status-badge-err'}">${isValid ? (u.plan_type || 'VIP ใช้งานได้') : 'รออนุมัติ / หมดอายุ'}</span></td>
                     <td style="font-size: 12px; color: var(--text-muted); white-space: nowrap;">${isValid ? expText : '-'}</td>
                     <td><div class="admin-btn-group">
-                        <button class="btn-grant" style="background: #f3e8ff; color: #7e22ce;" onclick="adminGrantDays('${u.id}', '${u.username}', 3, 'TRIAL_3D')">+3 วัน</button>
+                        <button class="btn-grant" style="background: #f3e8ff; color: #7e22ce;" onclick="adminGrantDays('${u.id}', '${u.username}', 1, 'TRIAL_24H')">+1 วัน (24ชม.)</button>
                         <button class="btn-grant" style="background: #e0f2fe; color: #0369a1;" onclick="adminGrantDays('${u.id}', '${u.username}', 7, 'STARTER_7D')">+7 วัน</button>
                         <button class="btn-grant" style="background: #dcfce7; color: #15803d;" onclick="adminGrantDays('${u.id}', '${u.username}', 30, 'PRO_30D')">+30 วัน</button>
                         <button class="btn-grant" style="background: #fef3c7; color: #b45309;" onclick="adminGrantDays('${u.id}', '${u.username}', 90, 'VIP_90D')">+90 วัน</button>
@@ -1406,7 +1417,7 @@
                 </tr>`;
             }).join('');
         }
-
+        
         function filterAdminUsers() {
             const kw = document.getElementById('adminSearchInput').value.toLowerCase();
             renderAdminUsers(adminUsersCache.filter(u => (u.username || '').toLowerCase().includes(kw) || (u.tg_phone || '').toLowerCase().includes(kw) || (u.tg_name || '').toLowerCase().includes(kw)));
