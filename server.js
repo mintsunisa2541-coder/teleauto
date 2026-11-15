@@ -178,7 +178,7 @@ async function getLatestSavedPosts(client) {
         return b.id - a.id;
     });
 }
-// บังคับสร้างสถานะรออนุมัติทันทีหลังสมัครสมาชิกใหม่ (ป้องกันการได้สิทธิ์ฟรีอัตโนมัติ)
+
 app.post('/api/auth/register-pending', authenticateUser, async (req, res) => {
     const userId = req.user.id;
     try {
@@ -202,6 +202,7 @@ app.post('/api/auth/register-pending', authenticateUser, async (req, res) => {
         return res.status(500).json({ success: false, error: err.message });
     }
 });
+
 app.get('/api/license/status', authenticateUser, async (req, res) => {
     const userId = req.user.id;
     try {
@@ -239,48 +240,6 @@ app.get('/api/license/status', authenticateUser, async (req, res) => {
     } catch (err) {
         return res.status(500).json({ valid: false, isAdmin: req.isAdmin, message: err.message });
     }
-});
-        }
-
-        const expireDate = new Date(data.expire_at);
-        if (isNaN(expireDate.getTime()) || new Date() > expireDate) {
-            return res.json({
-                valid: false,
-                isAdmin: req.isAdmin,
-                message: 'สิทธิ์หมดอายุแล้ว (ติดต่อ @huimin168)'
-            });
-        }
-
-        return res.json({
-            valid: true,
-            isAdmin: req.isAdmin,
-            expireDate: data.expire_at,
-            plan: data.plan_type || 'VIP'
-        });
-    } catch (err) {
-        return res.status(500).json({ valid: false, isAdmin: req.isAdmin, message: err.message });
-    }
-});
-
-// ================= AUTO-LOOP & POST ROTATION CONFIG API =================
-
-app.post('/api/loop/config', authenticateUser, (req, res) => {
-    const userId = req.user.id;
-    const loopHours = Math.max(0, parseInt(req.body.loopHours, 10) || 0);
-    userLoopConfigs.set(userId, loopHours);
-
-    const queue = userQueues.get(userId);
-    if (queue) {
-        queue.loopHours = loopHours;
-    }
-
-    return res.json({
-        success: true,
-        loopHours,
-        message: loopHours > 0
-            ? `ตั้งค่าวนยิงซ้ำอัตโนมัติทุก ~${loopHours} ชั่วโมง (สุ่มเวลาแบบเนียน) เรียบร้อย`
-            : 'ปิดโหมดวนลูปแล้ว (ยิงรอบเดียว)'
-    });
 });
 
 app.post('/api/rotation/config', authenticateUser, (req, res) => {
