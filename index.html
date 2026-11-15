@@ -1230,7 +1230,6 @@
         }
 
         async function handleAuth(event) {
-        async function handleAuth(event) {
             event.preventDefault();
             const rawUsername = document.getElementById('authEmail').value.trim().toLowerCase().replace(/[^a-z0-9._-]/g, '');
             const password = document.getElementById('authPassword').value.trim();
@@ -1257,7 +1256,6 @@
                     currentUser = data.user;
                     hasActiveLicense = false;
 
-                    // บังคับบันทึกสถานะ "รออนุมัติ" ลงฐานข้อมูลทันที
                     const headers = {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${data.session.access_token}`
@@ -1277,6 +1275,7 @@
                 authSubmitBtn.innerText = authMode === 'login' ? 'เข้าสู่ระบบ' : 'สมัครสมาชิก (ติดต่อ @huimin168 เพื่อขออนุมัติฟรี 1 วัน)';
             }
         }
+
         async function handleLogout() {
             if (statusInterval) clearInterval(statusInterval);
             clearTutTimers();
@@ -1694,7 +1693,7 @@
                 refreshQueueAndLogs();
             } catch (e) { alert(e.message); }
         }
-       }
+
         window.onload = initApp;
     </script>
 </body>
