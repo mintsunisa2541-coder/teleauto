@@ -303,7 +303,8 @@
         }
     </style>
 </head>
-<body>
+
+    <body>
 
     <div class="global-watermark"></div>
 
@@ -402,8 +403,8 @@
                     </div>
                 </div>
             </div>
-        
-                <div class="cta-footer">
+
+            <div class="cta-footer">
                 <div style="font-size: 12.5px; font-weight: 800; color: #fef08a;">🎁 แจกสิทธิ์ทดลองใช้ฟรี 1 วันเต็ม (24 ชม.)!</div>
                 <div style="font-size: 11.5px; margin-top: 2px;">ติดต่อผู้ดูแล Telegram: <strong style="background: #fff; color: #9333ea; padding: 1px 7px; border-radius: 6px;">@huimin168</strong></div>
                 <button type="button" class="btn-enter-auth" onclick="finishIntroToAuth()">เข้าสู่ระบบ / สมัครสมาชิกทันที 🚀</button>
@@ -424,7 +425,7 @@
 
             <div class="auth-tabs">
                 <button type="button" id="tabLogin" class="auth-tab-btn active" onclick="switchAuthTab('login')">เข้าสู่ระบบ</button>
-                <button type="button" id="tabRegister" class="auth-tab-btn" onclick="switchAuthTab('register')">สมัครสมาชิก (ฟรี 3 วัน ติดต่อเจ้าของ)</button>
+                <button type="button" id="tabRegister" class="auth-tab-btn" onclick="switchAuthTab('register')">สมัครสมาชิก (ฟรี 1 วัน / 24 ชม.)</button>
             </div>
 
             <div id="registerOwnerNotice" class="owner-notice-box" style="display: none;">
@@ -450,7 +451,7 @@
         </div>
     </div>
 
-    <!-- MOBILE TOP HEADER -->
+        <!-- MOBILE TOP HEADER -->
     <div class="mobile-header-bar">
         <div style="display: flex; align-items: center; gap: 8px;">
             <div style="width: 32px; height: 32px; background: linear-gradient(135deg, #9333ea, #ec4899); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 16px;">⚡</div>
@@ -543,7 +544,7 @@
                 <button onclick="handleLogout()" class="btn-logout">ออกจากระบบ</button>
             </div>
         </header>
-        
+
         <!-- กล่องแจ้งเตือนรออนุมัติสิทธิ์จากแอดมิน -->
         <div id="pendingApprovalBox" class="pending-approval-box">
             <div class="pending-title">🔒 บัญชีของคุณยังไม่ได้รับการอนุมัติแพ็กเกจ (รออนุมัติสิทธิ์ใช้งาน)</div>
@@ -555,7 +556,6 @@
                 <button type="button" onclick="openSellerTelegram('ขออนุมัติแพ็กเกจทดลองใช้ฟรี 1 วัน (24 ชม.)')" class="btn-contact-admin-urgent">💬 ทักแชทผู้ดูแล @huimin168 เพื่อขออนุมัติฟรี 1 วัน</button>
                 <button type="button" class="btn-copy-user" style="color: #10b981; border-color: #10b981;" onclick="loadUserLicense()">🔄 เช็กสถานะอนุมัติอีกครั้ง</button>
             </div>
-        </div>
         </div>
 
         <!-- กล่องตั้งค่า Smart Anti-Ban: สุ่มสลับโพสต์ + Auto-Loop 24 ชม. -->
@@ -586,7 +586,7 @@
         </div>
 
         <!-- BANNER -->
-       <section id="sec-banner" class="promo-banner">
+        <section id="sec-banner" class="promo-banner">
             <div class="banner-pill">👑 EXCLUSIVE TRIAL — ติดต่อที่เจ้าของเท่านั้น</div>
             <h2 style="font-size: 24px; font-weight: 800; margin-bottom: 8px;">ทดลองใช้ฟรี 1 วัน (24 ชม.)! ติดต่อรับสิทธิ์ที่เจ้าของระบบเท่านั้น</h2>
             <p style="font-size: 13px; opacity: 0.95; max-width: 580px; line-height: 1.6;">
@@ -602,7 +602,7 @@
                 <span style="font-size: 11px; font-weight: 800; line-height: 1.2; margin-top: 4px;">ฟรี 1 วัน<br>24 ชม.</span>
             </div>
         </section>
-        
+
         <!-- SECTION: วิดีโอแนะนำการใช้งาน -->
         <section id="sec-tutorial" class="content-card" style="display: none;">
             <div class="card-header">
@@ -677,7 +677,7 @@
             <div class="card-header">
                 <div>
                     <h3 style="font-size: 18px; font-weight: 700;">👑 ระบบจัดการสมาชิก & อนุมัติวันใช้งาน</h3>
-                    <p style="font-size: 12px; color: var(--text-muted);">เลื่อนตารางไปทางขวาเพื่อกดปุ่มอนุมัติวันใช้งาน ระงับสิทธิ์ หรือรีเซ็ตรหัสผ่านให้ลูกค้าได้ทันที</p>
+                    <p style="font-size: 12px; color: var(--text-muted);">เลื่อนตารางไปทางขวาเพื่อกดปุ่มอนุมัติทดลองใช้ 1 วัน (24 ชม.) เพิ่มวันใช้งาน ระงับสิทธิ์ หรือรีเซ็ตรหัสผ่านให้ลูกค้าได้ทันที</p>
                 </div>
                 <div class="group-toolbar">
                     <input type="search" id="adminSearchInput" class="group-search-box" autocomplete="off" oninput="filterAdminUsers()" placeholder="🔍 ค้นหาชื่อผู้ใช้หรือเบอร์...">
@@ -926,7 +926,8 @@
             <p id="tgModalError" style="color: #ef4444; font-size: 12px; margin-top: 12px; display: none;"></p>
         </div>
     </div>
-    <script>
+
+        <script>
         const BACKEND_URL = '';
         const SUPABASE_URL = 'https://enmtrrwaxoylbwhcpqhv.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_BZ7_17w06cY1ibqIZV6R0Q_Lf5uG-IK';
@@ -1218,7 +1219,7 @@
             }
         }
 
-          function switchAuthTab(mode) {
+        function switchAuthTab(mode) {
             authMode = mode;
             const isLogin = mode === 'login';
             document.getElementById('tabLogin').classList.toggle('active', isLogin);
@@ -1227,8 +1228,8 @@
             document.getElementById('authErrorMsg').style.display = 'none';
             document.getElementById('authSubmitBtn').innerText = isLogin ? 'เข้าสู่ระบบ' : 'สมัครสมาชิก (ติดต่อ @huimin168 เพื่อขออนุมัติฟรี 1 วัน)';
         }
-        
-async function handleAuth(event) {
+
+        async function handleAuth(event) {
             event.preventDefault();
             const rawUsername = document.getElementById('authEmail').value.trim().toLowerCase().replace(/[^a-z0-9._-]/g, '');
             const password = document.getElementById('authPassword').value.trim();
@@ -1266,7 +1267,6 @@ async function handleAuth(event) {
                 authSubmitBtn.innerText = authMode === 'login' ? 'เข้าสู่ระบบ' : 'สมัครสมาชิก (ติดต่อ @huimin168 เพื่อขออนุมัติฟรี 1 วัน)';
             }
         }
-        }
 
         async function handleLogout() {
             if (statusInterval) clearInterval(statusInterval);
@@ -1295,30 +1295,20 @@ async function handleAuth(event) {
             document.getElementById('authOverlay').style.display = 'flex';
         }
 
-       function renderAdminUsers(users) {
-            const tbody = document.getElementById('adminUsersTableBody');
-            if (!users || users.length === 0) { tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 24px;">ไม่พบรายชื่อสมาชิก</td></tr>`; return; }
-            tbody.innerHTML = users.map(u => {
-                const now = new Date();
-                const expDate = u.expire_at ? new Date(u.expire_at) : null;
-                const isValid = u.is_active && expDate && expDate > now;
-                const expText = expDate ? `${expDate.getDate()}/${expDate.getMonth()+1}/${expDate.getFullYear()+543} ${expDate.toLocaleTimeString('th-TH', {hour:'2-digit', minute:'2-digit'})}` : '-';
-                const tgInfo = u.tg_phone ? `${u.tg_name || ''} (${u.tg_phone})` : '<span style="color:var(--text-muted);">ยังไม่ผูกเบอร์</span>';
-                return `<tr>
-                    <td translate="no" style="font-weight: 700;">${u.username}</td>
-                    <td translate="no" style="font-size: 12px;">${tgInfo}</td>
-                    <td><span class="${isValid ? 'status-badge-ok' : 'status-badge-err'}">${isValid ? (u.plan_type || 'VIP ใช้งานได้') : 'รออนุมัติ / หมดอายุ'}</span></td>
-                    <td style="font-size: 12px; color: var(--text-muted); white-space: nowrap;">${isValid ? expText : '-'}</td>
-                    <td><div class="admin-btn-group">
-                        <button class="btn-grant" style="background: #f3e8ff; color: #7e22ce;" onclick="adminGrantDays('${u.id}', '${u.username}', 1, 'TRIAL_24H')">+1 วัน (24ชม.)</button>
-                        <button class="btn-grant" style="background: #e0f2fe; color: #0369a1;" onclick="adminGrantDays('${u.id}', '${u.username}', 7, 'STARTER_7D')">+7 วัน</button>
-                        <button class="btn-grant" style="background: #dcfce7; color: #15803d;" onclick="adminGrantDays('${u.id}', '${u.username}', 30, 'PRO_30D')">+30 วัน</button>
-                        <button class="btn-grant" style="background: #fef3c7; color: #b45309;" onclick="adminGrantDays('${u.id}', '${u.username}', 90, 'VIP_90D')">+90 วัน</button>
-                        <button class="btn-grant" style="background: #fee2e2; color: #b91c1c;" onclick="adminRevokeUser('${u.id}', '${u.username}')">ระงับ</button>
-                        <button class="btn-grant" style="background: #e2e8f0; color: #1e293b;" onclick="adminResetPassword('${u.id}', '${u.username}')">🔑 รีเซ็ตรหัส</button>
-                    </div></td>
-                </tr>`;
-            }).join('');
+        function copyPendingUsername() {
+            if (!currentUser) return;
+            const uname = currentUser.email.split('@')[0];
+            navigator.clipboard.writeText(uname).then(() => alert(`คัดลอกชื่อผู้ใช้ "${uname}" เรียบร้อยแล้ว! ส่งให้ผู้ดูแล @huimin168 เพื่อเปิดสิทธิ์ฟรี 1 วัน (24 ชม.) ได้เลยครับ`)).catch(() => alert(`ชื่อผู้ใช้ของคุณคือ: ${uname}`));
+        }
+
+        async function getAuthHeader() {
+            const { data: { session }, error } = await supabaseClient.auth.getSession();
+            if (error || !session || !session.access_token) {
+                alert('เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่อีกครั้ง');
+                await handleLogout();
+                throw new Error('No active session');
+            }
+            return { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` };
         }
 
         async function loadUserLicense() {
@@ -1335,7 +1325,7 @@ async function handleAuth(event) {
                     hasActiveLicense = true;
                     pendingBox.style.display = 'none';
                     const exp = new Date(result.expireDate);
-                    vipBadge.innerText = `สมาชิก VIP (หมดอายุ: ${exp.getDate()}/${exp.getMonth()+1}/${exp.getFullYear()+543})`;
+                    vipBadge.innerText = `สมาชิก VIP (หมดอายุ: ${exp.getDate()}/${exp.getMonth()+1}/${exp.getFullYear()+543} ${exp.toLocaleTimeString('th-TH', {hour:'2-digit', minute:'2-digit'})})`;
                 } else {
                     hasActiveLicense = false;
                     pendingBox.style.display = 'block';
@@ -1417,7 +1407,7 @@ async function handleAuth(event) {
                 </tr>`;
             }).join('');
         }
-        
+
         function filterAdminUsers() {
             const kw = document.getElementById('adminSearchInput').value.toLowerCase();
             renderAdminUsers(adminUsersCache.filter(u => (u.username || '').toLowerCase().includes(kw) || (u.tg_phone || '').toLowerCase().includes(kw) || (u.tg_name || '').toLowerCase().includes(kw)));
