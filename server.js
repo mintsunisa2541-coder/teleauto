@@ -405,15 +405,10 @@ app.post('/api/admin/grant-license', authenticateUser, requireAdmin, async (req,
             success: true,
             message: `อนุมัติเพิ่ม ${numDays} วันเรียบร้อย (หมดอายุ: ${newExpire.toLocaleDateString('th-TH')} ${newExpire.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })})`
         });
-    } catch (err) {
+    catch (err) {
         return res.status(500).json({ success: false, error: err.message });
     }
 });
-    } catch (err) {
-        return res.status(500).json({ success: false, error: err.message });
-    }
-});
-
 app.post('/api/admin/revoke-license', authenticateUser, requireAdmin, async (req, res) => {
     const { targetUserId } = req.body;
     if (!targetUserId) {
