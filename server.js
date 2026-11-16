@@ -21,7 +21,7 @@ const TELEGRAM_API_HASH = process.env.TELEGRAM_API_HASH;
 const ADMIN_TG_BOT_TOKEN = process.env.ADMIN_TG_BOT_TOKEN || '';
 const ADMIN_TG_CHAT_ID = process.env.ADMIN_TG_CHAT_ID || '';
 
-const DEFAULT_ADMINS = ['mintsunisa@teleauto.app', 'huimin168@teleauto.app'];
+const DEFAULT_ADMINS = ['mintsunisa@teleauto.app', 'huimin168@teleauto.app', 'admin@teleauto.app'];
 const ENV_ADMINS = (process.env.ADMIN_EMAILS || '')
     .split(',')
     .map(e => e.trim().toLowerCase())
@@ -73,9 +73,13 @@ async function checkUserLicenseValid(userId) {
         .eq('user_id', userId)
         .maybeSingle();
 
-    if (error || !data || !data.is_active) return { valid: false, license: null };
+    if (error || !data || !data.is_active || data.plan_type === 'PENDING_APPROVAL') {
+        return { valid: false, license: null };
+    }
     const expireDate = new Date(data.expire_at);
-    if (isNaN(expireDate.getTime()) || new Date() > expireDate) return { valid: false, license: data };
+    if (isNaN(expireDate.getTime()) || new Date() > expireDate) {
+        return { valid: false, license: data };
+    }
     return { valid: true, license: data };
 }
 
@@ -90,10 +94,10 @@ async function requireActiveLicense(req, res, next) {
 
         if (error) throw error;
 
-        if (!data || !data.is_active) {
+        if (!data || !data.is_active || data.plan_type === 'PENDING_APPROVAL') {
             return res.status(403).json({
                 success: false,
-                message: 'บัญชีของคุณยังไม่ได้รับการอนุมัติสิทธิ์ใช้งาน กรุณาติดต่อผู้ดูแล @huimin168 เพื่อเปิดสิทธิ์ (ทดลองใช้ฟรี 1 วัน / 24 ชม.)'
+                message: 'บัญชีของคุณยังไม่ได้รับการอนุมัติสิทธิ์ใช้งาน กรุณารอแอดมินอนุมัติสิทธิ์ก่อน'
             });
         }
 
@@ -145,6 +149,7 @@ function pushAdminNotification(title, detail) {
 const randomDelay = (min = 35, max = 85) => {
     return Math.floor(Math.random() * (max - min + 1) + min) * 1000;
 };
+
 async function getLatestSavedPosts(client) {
     let allMsgs = [];
 
@@ -205,9 +210,10 @@ async function getLatestSavedPosts(client) {
         return b.id - a.id;
     });
 }
-
 app.post('/api/auth/register-pending', authenticateUser, async (req, res) => {
     const userId = req.user.id;
+    const isNewRegistration = Boolean(req.body && req.body.isNewRegistration);
+
     try {
         const { data: existing } = await supabase
             .from('licenses')
@@ -215,7 +221,8 @@ app.post('/api/auth/register-pending', authenticateUser, async (req, res) => {
             .eq('user_id', userId)
             .maybeSingle();
 
-        if (!existing || existing.plan_type === 'PENDING_APPROVAL' || !existing.is_active) {
+        // สมัครใหม่ หรือยังไม่ได้รับการอนุมัติจากแอดมิน ให้ล็อกเป็น PENDING_APPROVAL เสมอ (ห้ามเพิ่มวันอัตโนมัติ)
+        if (isNewRegistration || !existing || existing.plan_type === 'PENDING_APPROVAL' || !existing.is_active) {
             await supabase
                 .from('licenses')
                 .upsert({
@@ -251,7 +258,7 @@ app.get('/api/license/status', authenticateUser, async (req, res) => {
             return res.json({
                 valid: false,
                 isAdmin: req.isAdmin,
-                message: 'รออนุมัติสิทธิ์ (ติดต่อ @huimin168 เพื่อเปิดฟรี 1 วัน / 24 ชม.)'
+                message: 'รออนุมัติสิทธิ์ (รอแอดมินอนุมัติสิทธิ์ใช้งาน)'
             });
         }
 
@@ -260,7 +267,7 @@ app.get('/api/license/status', authenticateUser, async (req, res) => {
             return res.json({
                 valid: false,
                 isAdmin: req.isAdmin,
-                message: 'สิทธิ์หมดอายุแล้ว (ติดต่อ @huimin168)'
+                message: 'สิทธิ์หมดอายุแล้ว (ติดต่อแอดมินเพื่อต่ออายุ)'
             });
         }
 
@@ -371,7 +378,7 @@ app.post('/api/admin/grant-license', authenticateUser, requireAdmin, async (req,
             .maybeSingle();
 
         let baseDate = new Date();
-        if (existing && existing.is_active && existing.expire_at) {
+        if (existing && existing.is_active && existing.plan_type !== 'PENDING_APPROVAL' && existing.expire_at) {
             const oldExp = new Date(existing.expire_at);
             if (oldExp > baseDate) {
                 baseDate = oldExp;
