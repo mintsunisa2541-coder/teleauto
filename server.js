@@ -184,22 +184,68 @@ app.post('/api/auth/register-pending', authenticateUser, async (req, res) => {
     try {
         const { data: existing } = await supabase
             .from('licenses')
-            .select('user_id')
+            .select('user_id, is_active, plan_type')
             .eq('user_id', userId)
             .maybeSingle();
 
-        if (!existing) {
-            await supabase.from('licenses').insert({
-                user_id: userId,
-                is_active: false,
-                plan_type: 'PENDING_APPROVAL',
-                expire_at: new Date(0).toISOString(),
-                updated_at: new Date().toISOString()
-            });
+        // หากยังไม่มีแถว หรือยังไม่ได้รับการอนุมัติจากแอดมิน ให้ล็อกเป็น PENDING_APPROVAL เสมอ
+        if (!existing || existing.plan_type === 'PENDING_APPROVAL' || !existing.is_active) {
+            await supabase
+                .from('licenses')
+                .upsert({
+                    user_id: userId,
+                    is_active: false,
+                    plan_type: 'PENDING_APPROVAL',
+                    expire_at: new Date(0).toISOString(),
+                    updated_at: new Date().toISOString()
+                }, { onConflict: 'user_id' });
+
+            const uname = (req.user.email || '').split('@')[0];
+            pushAdminNotification('มีสมาชิกสมัครใหม่ (รออนุมัติ)', `Username: ${uname} รอแอดมินกดอนุมัติสิทธิ์`);
         }
+
         return res.json({ success: true, message: 'บันทึกสถานะรออนุมัติเรียบร้อย' });
     } catch (err) {
         return res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+app.get('/api/license/status', authenticateUser, async (req, res) => {
+    const userId = req.user.id;
+    try {
+        const { data, error } = await supabase
+            .from('licenses')
+            .select('*')
+            .eq('user_id', userId)
+            .maybeSingle();
+
+        if (error) throw error;
+
+        if (!data || data.is_active !== true || data.plan_type === 'PENDING_APPROVAL') {
+            return res.json({
+                valid: false,
+                isAdmin: req.isAdmin,
+                message: 'รออนุมัติสิทธิ์ (ติดต่อแอดมินเพื่อเปิดสิทธิ์ใช้งาน)'
+            });
+        }
+
+        const expireDate = new Date(data.expire_at);
+        if (isNaN(expireDate.getTime()) || new Date() > expireDate) {
+            return res.json({
+                valid: false,
+                isAdmin: req.isAdmin,
+                message: 'สิทธิ์หมดอายุแล้ว (ติดต่อแอดมินเพื่อต่ออายุ)'
+            });
+        }
+
+        return res.json({
+            valid: true,
+            isAdmin: req.isAdmin,
+            expireDate: data.expire_at,
+            plan: data.plan_type || 'VIP'
+        });
+    } catch (err) {
+        return res.status(500).json({ valid: false, isAdmin: req.isAdmin, message: err.message });
     }
 });
 
