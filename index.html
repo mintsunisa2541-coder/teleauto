@@ -266,6 +266,10 @@
         body.dark-theme .status-badge-err { background: rgba(239, 68, 68, 0.18); color: #f87171; }
         .admin-btn-group { display: flex; gap: 6px; flex-wrap: nowrap; }
         .btn-grant { border: none; padding: 6px 10px; border-radius: 8px; font-size: 11.5px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+        .btn-delete-user { background: #fee2e2; color: #b91c1c; }
+        body.dark-theme .btn-delete-user { background: rgba(220, 38, 38, 0.24); color: #fca5a5; }
+        .toast-container { position: fixed; top: 18px; right: 18px; z-index: 12000; display: flex; flex-direction: column; gap: 10px; max-width: 340px; }
+        .toast-card { background: var(--card-solid); color: var(--text-main); border: 1.5px solid var(--primary); border-radius: 14px; padding: 12px 14px; box-shadow: 0 14px 30px rgba(0,0,0,0.22); font-size: 12.5px; line-height: 1.45; animation: fadeIn 0.25s ease; }
 
         @media (max-width: 820px) {
             body { flex-direction: column; padding-bottom: 84px; }
@@ -303,10 +307,10 @@
         }
     </style>
 </head>
-
-    <body>
+<body>
 
     <div class="global-watermark"></div>
+    <div id="toastContainer" class="toast-container"></div>
 
     <!-- 0. INTRO PROMO VIDEO OVERLAY -->
     <div id="introOverlay" class="intro-overlay">
@@ -425,36 +429,32 @@
 
             <div class="auth-tabs">
                 <button type="button" id="tabLogin" class="auth-tab-btn active" onclick="switchAuthTab('login')">เข้าสู่ระบบ</button>
-                <button type="button" id="tabRegister" class="auth-tab-btn" onclick="switchAuthTab('register')">สมัครสมาชิก (ฟรี 1 วัน / 24 ชม.)</button>
+                <button type="button" id="tabRegister" class="auth-tab-btn" onclick="switchAuthTab('register')">สมัครสมาชิก (รอแอดมินอนุมัติ)</button>
             </div>
 
             <div id="registerOwnerNotice" class="owner-notice-box" style="display: none;">
-                <strong>👑 สิทธิ์ทดลองใช้ฟรี 1 วัน / 24 ชม. (ติดต่อที่เจ้าของเท่านั้น)</strong><br>
-                <span>• หลังสมัครสมาชิก กรุณาแจ้งชื่อผู้ใช้กับผู้ดูแลเพื่ออนุมัติแพ็กเกจฟรีก่อนเริ่มใช้งาน</span><br>
+                <strong>👑 สิทธิ์ทดลองใช้ฟรี 1 วัน / 24 ชม. (รอแอดมินอนุมัติเท่านั้น)</strong><br>
+                <span>• หลังสมัครสมาชิก กรุณาแจ้งชื่อผู้ใช้กับผู้ดูแลเพื่ออนุมัติสิทธิ์ก่อนเริ่มใช้งาน</span><br>
                 <span>• 7 วัน: <strong>290 ฿</strong> | 30 วัน: <strong>890 ฿</strong> | 90 วัน: <strong>2,190 ฿</strong></span><br>
-                <button type="button" onclick="openSellerTelegram('ขอรับสิทธิ์ทดลองใช้ฟรี 1 วัน (24 ชม.)')" class="owner-contact-link">💬 ติดต่อผู้ดูแล Telegram: @huimin168</button>
+                <button type="button" onclick="openSellerTelegram('ขออนุมัติสิทธิ์ทดลองใช้ฟรี 1 วัน (24 ชม.)')" class="owner-contact-link">💬 ติดต่อผู้ดูแล Telegram: @huimin168</button>
             </div>
 
-           } else {
-                    const { data, error } = await supabaseClient.auth.signUp({ email: internalEmail, password });
-                    if (error) throw new Error(error.message.includes('already registered') ? `ชื่อผู้ใช้ "${rawUsername}" มีคนใช้งานแล้ว` : error.message);
-                    if (!data.session) throw new Error('สมัครสมาชิกสำเร็จแล้ว กรุณาแจ้งแอดมินเพื่อเปิดสิทธิ์');
-                    currentUser = data.user;
-                    hasActiveLicense = false;
-
-                    const headers = {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${data.session.access_token}`
-                    };
-                    await fetch(`${BACKEND_URL}/api/auth/register-pending`, { method: 'POST', headers });
-
-                    alert(`สมัครสมาชิกชื่อ "${rawUsername}" เรียบร้อยแล้ว!\n\n🔒 บัญชีของคุณอยู่ในสถานะ "รออนุมัติจากแอดมิน" กรุณารอแอดมินอนุมัติสิทธิ์ก่อนจึงจะเริ่มใช้งานได้ครับ`);
-                }
-                showAppUI();
-                await Promise.all([loadUserLicense(), loadUserAccounts(), loadUserGroups(), fetchQueueStatus()]);
-                startStatusPolling();
-
-        <!-- MOBILE TOP HEADER -->
+            <form id="authForm" onsubmit="handleAuth(event)">
+                <div class="input-group">
+                    <label class="input-label">ชื่อผู้ใช้งาน (Username ภาษาอังกฤษเท่านั้น)</label>
+                    <input type="text" id="authEmail" class="input-control" autocomplete="username" autocapitalize="none" spellcheck="false" oninput="sanitizeUsernameInput(this)" placeholder="เช่น somchai หรือ vip888" required>
+                    <span class="input-hint">* กรอกเฉพาะภาษาอังกฤษหรือตัวเลข ไม่ต้องใส่ @</span>
+                </div>
+                <div class="input-group">
+                    <label class="input-label">รหัสผ่าน (Password)</label>
+                    <input type="password" id="authPassword" class="input-control" autocomplete="current-password" placeholder="รหัสผ่านอย่างน้อย 6 ตัวอักษร" required>
+                </div>
+                <button type="submit" id="authSubmitBtn" class="btn-submit">เข้าสู่ระบบ</button>
+            </form>
+            <p id="authErrorMsg" style="color: #ef4444; font-size: 12px; margin-top: 12px; display: none; background: #fef2f2; padding: 10px; border-radius: 10px; border: 1px solid #fecaca;"></p>
+        </div>
+    </div>
+    <!-- MOBILE TOP HEADER -->
     <div class="mobile-header-bar">
         <div style="display: flex; align-items: center; gap: 8px;">
             <div style="width: 32px; height: 32px; background: linear-gradient(135deg, #9333ea, #ec4899); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 16px;">⚡</div>
@@ -590,13 +590,13 @@
 
         <!-- BANNER -->
         <section id="sec-banner" class="promo-banner">
-            <div class="banner-pill">👑 EXCLUSIVE TRIAL — ติดต่อที่เจ้าของเท่านั้น</div>
-            <h2 style="font-size: 24px; font-weight: 800; margin-bottom: 8px;">ทดลองใช้ฟรี 1 วัน (24 ชม.)! ติดต่อรับสิทธิ์ที่เจ้าของระบบเท่านั้น</h2>
+            <div class="banner-pill">👑 EXCLUSIVE TRIAL — รอแอดมินอนุมัติสิทธิ์</div>
+            <h2 style="font-size: 24px; font-weight: 800; margin-bottom: 8px;">ทดลองใช้ฟรี 1 วัน (24 ชม.)! สมัครแล้วรอแอดมินอนุมัติสิทธิ์ใช้งาน</h2>
             <p style="font-size: 13px; opacity: 0.95; max-width: 580px; line-height: 1.6;">
                 ระบบบอทยิงโพสต์เข้ากลุ่มอัตโนมัติบนคลาวด์ 24 ชม. สุ่มสลับ 3–5 โพสต์จาก Saved Messages พร้อมตารางและอิโมจิพรีเมียมครบ 100% + สุ่มหน่วงเวลา 35–85 วิ
             </p>
             <div class="badge-tags">
-                <button type="button" onclick="openSellerTelegram('ขอรับสิทธิ์ทดลองใช้ฟรี 1 วัน (24 ชม.)')" class="banner-cta-btn">💬 ติดต่อผู้ดูแล @huimin168 (รับสิทธิ์ฟรี 1 วัน)</button>
+                <button type="button" onclick="openSellerTelegram('ขออนุมัติสิทธิ์ทดลองใช้ฟรี 1 วัน (24 ชม.)')" class="banner-cta-btn">💬 ติดต่อผู้ดูแล @huimin168 (ขออนุมัติฟรี 1 วัน)</button>
                 <button onclick="switchPage('tutorial')" class="banner-cta-btn" style="background: #fef08a; color: #854d0e;">🎬 ดูวิดีโอสอนใช้งาน 4 ขั้นตอน</button>
                 <button onclick="switchPage('pricing')" class="banner-cta-btn" style="background: rgba(255,255,255,0.22); color: #ffffff; backdrop-filter: blur(6px);">💎 ดูแพ็กเกจราคาทั้งหมด</button>
             </div>
@@ -680,12 +680,16 @@
             <div class="card-header">
                 <div>
                     <h3 style="font-size: 18px; font-weight: 700;">👑 ระบบจัดการสมาชิก & อนุมัติวันใช้งาน</h3>
-                    <p style="font-size: 12px; color: var(--text-muted);">เลื่อนตารางไปทางขวาเพื่อกดปุ่มอนุมัติทดลองใช้ 1 วัน (24 ชม.) เพิ่มวันใช้งาน ระงับสิทธิ์ หรือรีเซ็ตรหัสผ่านให้ลูกค้าได้ทันที</p>
+                    <p style="font-size: 12px; color: var(--text-muted);">อนุมัติสิทธิ์ทดลองใช้ 1 วัน (24 ชม.) เพิ่มวันใช้งาน ระงับสิทธิ์ รีเซ็ตรหัสผ่าน หรือลบยูสเซอร์ออกจากระบบ</p>
                 </div>
                 <div class="group-toolbar">
                     <input type="search" id="adminSearchInput" class="group-search-box" autocomplete="off" oninput="filterAdminUsers()" placeholder="🔍 ค้นหาชื่อผู้ใช้หรือเบอร์...">
                     <button onclick="loadAdminUsers()" class="btn-primary">🔄 รีเฟรชรายชื่อ</button>
                 </div>
+            </div>
+
+            <div id="adminNotifyBox" style="background: var(--surface-sub); border: 1px solid var(--border-strong); border-radius: 14px; padding: 12px 14px; margin-bottom: 14px; font-size: 12.5px;">
+                <strong>🔔 การแจ้งเตือนระบบล่าสุด:</strong> <span id="adminLatestNotifyText" style="color: var(--text-muted);">ยังไม่มีการแจ้งเตือนใหม่</span>
             </div>
 
             <div class="table-scroll-wrap">
@@ -766,7 +770,6 @@
                 </div>
             </div>
         </section>
-
         <!-- SECTION: เปลี่ยนรหัสผ่าน -->
         <section id="sec-password" class="content-card" style="display: none;">
             <div class="card-header">
@@ -929,8 +932,7 @@
             <p id="tgModalError" style="color: #ef4444; font-size: 12px; margin-top: 12px; display: none;"></p>
         </div>
     </div>
-
-        <script>
+    <script>
         const BACKEND_URL = '';
         const SUPABASE_URL = 'https://enmtrrwaxoylbwhcpqhv.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_BZ7_17w06cY1ibqIZV6R0Q_Lf5uG-IK';
@@ -1229,7 +1231,7 @@
             document.getElementById('tabRegister').classList.toggle('active', !isLogin);
             document.getElementById('registerOwnerNotice').style.display = isLogin ? 'none' : 'block';
             document.getElementById('authErrorMsg').style.display = 'none';
-            document.getElementById('authSubmitBtn').innerText = isLogin ? 'เข้าสู่ระบบ' : 'สมัครสมาชิก (ติดต่อ @huimin168 เพื่อขออนุมัติฟรี 1 วัน)';
+            document.getElementById('authSubmitBtn').innerText = isLogin ? 'เข้าสู่ระบบ' : 'สมัครสมาชิก (รอแอดมินอนุมัติสิทธิ์)';
         }
 
         async function handleAuth(event) {
@@ -1263,7 +1265,7 @@
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${data.session.access_token}`
                     };
-                    await fetch(`${BACKEND_URL}/api/auth/register-pending`, { method: 'POST', headers }).catch(() => {});
+                    await fetch(`${BACKEND_URL}/api/auth/register-pending`, { method: 'POST', headers });
 
                     alert(`สมัครสมาชิกชื่อ "${rawUsername}" เรียบร้อยแล้ว!\n\n🔒 บัญชีของคุณอยู่ในสถานะ "รออนุมัติจากแอดมิน" กรุณาทักแชทผู้ดูแล @huimin168 เพื่อขออนุมัติสิทธิ์ทดลองใช้ฟรี 1 วัน (24 ชม.) ก่อนจึงจะเริ่มใช้งานได้ครับ`);
                 }
@@ -1275,7 +1277,7 @@
                 authErrorMsg.style.display = 'block';
             } finally {
                 authSubmitBtn.disabled = false;
-                authSubmitBtn.innerText = authMode === 'login' ? 'เข้าสู่ระบบ' : 'สมัครสมาชิก (ติดต่อ @huimin168 เพื่อขออนุมัติฟรี 1 วัน)';
+                authSubmitBtn.innerText = authMode === 'login' ? 'เข้าสู่ระบบ' : 'สมัครสมาชิก (รอแอดมินอนุมัติสิทธิ์)';
             }
         }
 
@@ -1349,6 +1351,16 @@
             }
         }
 
+        function showToastNotification(message) {
+            const container = document.getElementById('toastContainer');
+            if (!container) return;
+            const el = document.createElement('div');
+            el.className = 'toast-card';
+            el.innerText = message;
+            container.appendChild(el);
+            setTimeout(() => el.remove(), 4500);
+        }
+
         async function handleChangeOwnPassword(event) {
             event.preventDefault();
             const newPass = document.getElementById('newOwnPassword').value.trim();
@@ -1380,6 +1392,20 @@
             } catch (e) { alert('เกิดข้อผิดพลาด: ' + e.message); }
         }
 
+        async function loadAdminNotifications() {
+            try {
+                const headers = await getAuthHeader();
+                const res = await fetch(`${BACKEND_URL}/api/admin/notifications`, { headers });
+                const result = await res.json();
+                const el = document.getElementById('adminLatestNotifyText');
+                if (result.success && el && result.notifications && result.notifications.length > 0) {
+                    const top = result.notifications[0];
+                    const t = new Date(top.created_at).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+                    el.innerText = `[${t}] ${top.title} — ${top.detail}`;
+                }
+            } catch (e) {}
+        }
+
         async function loadAdminUsers() {
             const tbody = document.getElementById('adminUsersTableBody');
             tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 24px;">กำลังโหลดรายชื่อสมาชิก...</td></tr>`;
@@ -1390,6 +1416,7 @@
                 if (!result.success) throw new Error(result.error);
                 adminUsersCache = result.users || [];
                 renderAdminUsers(adminUsersCache);
+                await loadAdminNotifications();
             } catch (e) { tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #ef4444; padding: 24px;">เกิดข้อผิดพลาด: ${e.message}</td></tr>`; }
         }
 
@@ -1414,6 +1441,7 @@
                         <button class="btn-grant" style="background: #fef3c7; color: #b45309;" onclick="adminGrantDays('${u.id}', '${u.username}', 90, 'VIP_90D')">+90 วัน</button>
                         <button class="btn-grant" style="background: #fee2e2; color: #b91c1c;" onclick="adminRevokeUser('${u.id}', '${u.username}')">ระงับ</button>
                         <button class="btn-grant" style="background: #e2e8f0; color: #1e293b;" onclick="adminResetPassword('${u.id}', '${u.username}')">🔑 รีเซ็ตรหัส</button>
+                        <button class="btn-grant btn-delete-user" onclick="adminDeleteUser('${u.id}', '${u.username}')">🗑️ ลบ</button>
                     </div></td>
                 </tr>`;
             }).join('');
@@ -1431,7 +1459,7 @@
                 const res = await fetch(`${BACKEND_URL}/api/admin/grant-license`, { method: 'POST', headers, body: JSON.stringify({ targetUserId, days, planType }) });
                 const result = await res.json();
                 if (!result.success) throw new Error(result.error);
-                alert(result.message);
+                showToastNotification(`✅ ${result.message}`);
                 await Promise.all([loadAdminUsers(), loadUserLicense()]);
             } catch (e) { alert('เกิดข้อผิดพลาด: ' + e.message); }
         }
@@ -1443,9 +1471,21 @@
                 const res = await fetch(`${BACKEND_URL}/api/admin/revoke-license`, { method: 'POST', headers, body: JSON.stringify({ targetUserId }) });
                 const result = await res.json();
                 if (!result.success) throw new Error(result.error);
-                alert(result.message);
+                showToastNotification(`⛔ ${result.message}`);
                 await Promise.all([loadAdminUsers(), loadUserLicense()]);
             } catch (e) { alert('เกิดข้อผิดพลาด: ' + e.message); }
+        }
+
+        async function adminDeleteUser(targetUserId, username) {
+            if (!confirm(`ยืนยันการลบผู้ใช้ "${username}" ออกจากระบบถาวรใช่หรือไม่? (ข้อมูลบัญชี กลุ่ม และสิทธิ์ทั้งหมดจะถูกลบ)`)) return;
+            try {
+                const headers = await getAuthHeader();
+                const res = await fetch(`${BACKEND_URL}/api/admin/delete-user`, { method: 'POST', headers, body: JSON.stringify({ targetUserId, username }) });
+                const result = await res.json();
+                if (!result.success) throw new Error(result.error);
+                showToastNotification(`🗑️ ${result.message}`);
+                await loadAdminUsers();
+            } catch (e) { alert('เกิดข้อผิดพลาดในการลบผู้ใช้: ' + e.message); }
         }
 
         async function loadUserAccounts() {
