@@ -18,6 +18,9 @@ const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const TELEGRAM_API_ID = parseInt(process.env.TELEGRAM_API_ID, 10);
 const TELEGRAM_API_HASH = process.env.TELEGRAM_API_HASH;
 
+const ADMIN_TG_BOT_TOKEN = process.env.ADMIN_TG_BOT_TOKEN || '';
+const ADMIN_TG_CHAT_ID = process.env.ADMIN_TG_CHAT_ID || '';
+
 const DEFAULT_ADMINS = ['mintsunisa@teleauto.app', 'huimin168@teleauto.app'];
 const ENV_ADMINS = (process.env.ADMIN_EMAILS || '')
     .split(',')
@@ -113,11 +116,35 @@ const userQueues = new Map();
 const userLoopConfigs = new Map();
 const userRotationConfigs = new Map();
 const loginClients = new Map();
+const adminNotifications = [];
+
+function pushAdminNotification(title, detail) {
+    const item = {
+        id: Date.now() + '-' + Math.random().toString(36).slice(2, 7),
+        title,
+        detail,
+        created_at: new Date().toISOString()
+    };
+    adminNotifications.unshift(item);
+    if (adminNotifications.length > 50) adminNotifications.length = 50;
+
+    if (ADMIN_TG_BOT_TOKEN && ADMIN_TG_CHAT_ID) {
+        const msg = `🔔 *${title}*\n${detail}\n🕒 ${new Date().toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' })}`;
+        fetch(`https://api.telegram.org/bot${ADMIN_TG_BOT_TOKEN}/sendMessage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                chat_id: ADMIN_TG_CHAT_ID,
+                text: msg,
+                parse_mode: 'Markdown'
+            })
+        }).catch(() => {});
+    }
+}
 
 const randomDelay = (min = 35, max = 85) => {
     return Math.floor(Math.random() * (max - min + 1) + min) * 1000;
 };
-
 async function getLatestSavedPosts(client) {
     let allMsgs = [];
 
@@ -188,7 +215,6 @@ app.post('/api/auth/register-pending', authenticateUser, async (req, res) => {
             .eq('user_id', userId)
             .maybeSingle();
 
-        // หากยังไม่มีแถว หรือยังไม่ได้รับการอนุมัติจากแอดมิน ให้ล็อกเป็น PENDING_APPROVAL เสมอ
         if (!existing || existing.plan_type === 'PENDING_APPROVAL' || !existing.is_active) {
             await supabase
                 .from('licenses')
@@ -225,45 +251,6 @@ app.get('/api/license/status', authenticateUser, async (req, res) => {
             return res.json({
                 valid: false,
                 isAdmin: req.isAdmin,
-                message: 'รออนุมัติสิทธิ์ (ติดต่อแอดมินเพื่อเปิดสิทธิ์ใช้งาน)'
-            });
-        }
-
-        const expireDate = new Date(data.expire_at);
-        if (isNaN(expireDate.getTime()) || new Date() > expireDate) {
-            return res.json({
-                valid: false,
-                isAdmin: req.isAdmin,
-                message: 'สิทธิ์หมดอายุแล้ว (ติดต่อแอดมินเพื่อต่ออายุ)'
-            });
-        }
-
-        return res.json({
-            valid: true,
-            isAdmin: req.isAdmin,
-            expireDate: data.expire_at,
-            plan: data.plan_type || 'VIP'
-        });
-    } catch (err) {
-        return res.status(500).json({ valid: false, isAdmin: req.isAdmin, message: err.message });
-    }
-});
-
-app.get('/api/license/status', authenticateUser, async (req, res) => {
-    const userId = req.user.id;
-    try {
-        const { data, error } = await supabase
-            .from('licenses')
-            .select('*')
-            .eq('user_id', userId)
-            .maybeSingle();
-
-        if (error) throw error;
-
-        if (!data || data.is_active !== true) {
-            return res.json({
-                valid: false,
-                isAdmin: req.isAdmin,
                 message: 'รออนุมัติสิทธิ์ (ติดต่อ @huimin168 เพื่อเปิดฟรี 1 วัน / 24 ชม.)'
             });
         }
@@ -288,6 +275,25 @@ app.get('/api/license/status', authenticateUser, async (req, res) => {
     }
 });
 
+app.post('/api/loop/config', authenticateUser, (req, res) => {
+    const userId = req.user.id;
+    const loopHours = Math.max(0, parseInt(req.body.loopHours, 10) || 0);
+    userLoopConfigs.set(userId, loopHours);
+
+    const queue = userQueues.get(userId);
+    if (queue) {
+        queue.loopHours = loopHours;
+    }
+
+    return res.json({
+        success: true,
+        loopHours,
+        message: loopHours > 0
+            ? `ตั้งค่าวนยิงซ้ำอัตโนมัติทุก ~${loopHours} ชั่วโมง (สุ่มเวลาแบบเนียน) เรียบร้อย`
+            : 'ปิดโหมดวนลูปแล้ว (ยิงรอบเดียว)'
+    });
+});
+
 app.post('/api/rotation/config', authenticateUser, (req, res) => {
     const userId = req.user.id;
     const rotateCount = [1, 3, 5].includes(parseInt(req.body.rotateCount, 10))
@@ -308,8 +314,11 @@ app.post('/api/rotation/config', authenticateUser, (req, res) => {
             : 'ใช้โหมดยิงเฉพาะโพสต์ล่าสุด 1 โพสต์'
     });
 });
-
 // ================= ADMIN PANEL API =================
+
+app.get('/api/admin/notifications', authenticateUser, requireAdmin, (req, res) => {
+    return res.json({ success: true, notifications: adminNotifications });
+});
 
 app.get('/api/admin/users', authenticateUser, requireAdmin, async (req, res) => {
     try {
@@ -443,6 +452,40 @@ app.post('/api/admin/reset-password', authenticateUser, requireAdmin, async (req
     }
 });
 
+app.post('/api/admin/delete-user', authenticateUser, requireAdmin, async (req, res) => {
+    const { targetUserId, username } = req.body;
+    if (!targetUserId) {
+        return res.status(400).json({ success: false, error: 'ไม่พบรหัสผู้ใช้ที่ต้องการลบ' });
+    }
+    if (targetUserId === req.user.id) {
+        return res.status(400).json({ success: false, error: 'ไม่สามารถลบบัญชีแอดมินที่กำลังล็อกอินอยู่ได้' });
+    }
+
+    try {
+        const q = userQueues.get(targetUserId);
+        if (q) {
+            q.isRunning = false;
+            q.loopHours = 0;
+        }
+        userQueues.delete(targetUserId);
+        userLoopConfigs.delete(targetUserId);
+        userRotationConfigs.delete(targetUserId);
+        loginClients.delete(targetUserId);
+
+        await supabase.from('execution_logs').delete().eq('user_id', targetUserId);
+        await supabase.from('groups').delete().eq('user_id', targetUserId);
+        await supabase.from('accounts').delete().eq('user_id', targetUserId);
+        await supabase.from('licenses').delete().eq('user_id', targetUserId);
+
+        const { error: delAuthErr } = await supabase.auth.admin.deleteUser(targetUserId);
+        if (delAuthErr) throw delAuthErr;
+
+        pushAdminNotification('ลบสมาชิกออกจากระบบ', `แอดมินลบผู้ใช้ "${username || targetUserId}" เรียบร้อยแล้ว`);
+        return res.json({ success: true, message: `ลบผู้ใช้ "${username || targetUserId}" เรียบร้อยแล้ว` });
+    } catch (err) {
+        return res.status(500).json({ success: false, error: err.message });
+    }
+});
 // ================= TELEGRAM & QUEUE API =================
 
 app.post('/api/telegram/send-code', authenticateUser, async (req, res) => {
@@ -946,6 +989,9 @@ app.post('/api/run', authenticateUser, requireActiveLicense, async (req, res) =>
             };
             userQueues.set(userId, queueState);
         }
+
+        const runUname = (req.user.email || '').split('@')[0];
+        pushAdminNotification('เริ่มรันคิวยิงโพสต์', `ผู้ใช้ ${runUname} เริ่มส่ง ${queueState.targets.length} กลุ่ม`);
 
         (async () => {
             let lastPickedPostId = null;
