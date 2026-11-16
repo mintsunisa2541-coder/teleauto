@@ -371,38 +371,44 @@ app.post('/api/admin/grant-license', authenticateUser, requireAdmin, async (req,
     }
 
     try {
-        const { data: existing } = await supabase
+        const { data: existing, error: fetchErr } = await supabase
             .from('licenses')
             .select('*')
             .eq('user_id', targetUserId)
             .maybeSingle();
 
+        if (fetchErr) throw fetchErr;
+
         let baseDate = new Date();
-        if (existing && existing.is_active && existing.plan_type !== 'PENDING_APPROVAL' && existing.expire_at) {
+        if (existing && existing.is_active === true && existing.plan_type !== 'PENDING_APPROVAL' && existing.expire_at) {
             const oldExp = new Date(existing.expire_at);
-            if (oldExp > baseDate) {
+            if (!isNaN(oldExp.getTime()) && oldExp.getTime() > baseDate.getTime()) {
                 baseDate = oldExp;
             }
         }
 
         const newExpire = new Date(baseDate.getTime() + numDays * 24 * 60 * 60 * 1000);
+        const resolvedPlan = (planType && planType !== 'PENDING_APPROVAL') ? planType : `VIP_${numDays}D`;
 
-        const { error } = await supabase
+        const { error: upsertErr } = await supabase
             .from('licenses')
             .upsert({
                 user_id: targetUserId,
                 is_active: true,
-                plan_type: planType || `VIP_${numDays}D`,
-                expire_at: newExpire.toISOString(),
-                updated_at: new Date().toISOString()
+                plan_type: resolvedPlan,
+                expire_at: newExpire.toISOString()
             }, { onConflict: 'user_id' });
 
-        if (error) throw error;
+        if (upsertErr) throw upsertErr;
 
         return res.json({
             success: true,
             message: `อนุมัติเพิ่ม ${numDays} วันเรียบร้อย (หมดอายุ: ${newExpire.toLocaleDateString('th-TH')} ${newExpire.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })})`
         });
+    } catch (err) {
+        return res.status(500).json({ success: false, error: err.message });
+    }
+});
     } catch (err) {
         return res.status(500).json({ success: false, error: err.message });
     }
