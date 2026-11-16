@@ -210,6 +210,7 @@ async function getLatestSavedPosts(client) {
         return b.id - a.id;
     });
 }
+
 app.post('/api/auth/register-pending', authenticateUser, async (req, res) => {
     const userId = req.user.id;
     const isNewRegistration = Boolean(req.body && req.body.isNewRegistration);
@@ -221,7 +222,6 @@ app.post('/api/auth/register-pending', authenticateUser, async (req, res) => {
             .eq('user_id', userId)
             .maybeSingle();
 
-        // สมัครใหม่ หรือยังไม่ได้รับการอนุมัติจากแอดมิน ให้ล็อกเป็น PENDING_APPROVAL เสมอ (ห้ามเพิ่มวันอัตโนมัติ)
         if (isNewRegistration || !existing || existing.plan_type === 'PENDING_APPROVAL' || !existing.is_active) {
             await supabase
                 .from('licenses')
@@ -229,8 +229,7 @@ app.post('/api/auth/register-pending', authenticateUser, async (req, res) => {
                     user_id: userId,
                     is_active: false,
                     plan_type: 'PENDING_APPROVAL',
-                    expire_at: new Date(0).toISOString(),
-                    updated_at: new Date().toISOString()
+                    expire_at: new Date(0).toISOString()
                 }, { onConflict: 'user_id' });
 
             const uname = (req.user.email || '').split('@')[0];
@@ -321,6 +320,7 @@ app.post('/api/rotation/config', authenticateUser, (req, res) => {
             : 'ใช้โหมดยิงเฉพาะโพสต์ล่าสุด 1 โพสต์'
     });
 });
+
 // ================= ADMIN PANEL API =================
 
 app.get('/api/admin/notifications', authenticateUser, requireAdmin, (req, res) => {
@@ -405,10 +405,11 @@ app.post('/api/admin/grant-license', authenticateUser, requireAdmin, async (req,
             success: true,
             message: `อนุมัติเพิ่ม ${numDays} วันเรียบร้อย (หมดอายุ: ${newExpire.toLocaleDateString('th-TH')} ${newExpire.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })})`
         });
-    catch (err) {
+    } catch (err) {
         return res.status(500).json({ success: false, error: err.message });
     }
 });
+
 app.post('/api/admin/revoke-license', authenticateUser, requireAdmin, async (req, res) => {
     const { targetUserId } = req.body;
     if (!targetUserId) {
@@ -429,8 +430,7 @@ app.post('/api/admin/revoke-license', authenticateUser, requireAdmin, async (req
                 user_id: targetUserId,
                 is_active: false,
                 plan_type: 'REVOKED',
-                expire_at: new Date().toISOString(),
-                updated_at: new Date().toISOString()
+                expire_at: new Date().toISOString()
             }, { onConflict: 'user_id' });
 
         if (error) throw error;
@@ -494,6 +494,7 @@ app.post('/api/admin/delete-user', authenticateUser, requireAdmin, async (req, r
         return res.status(500).json({ success: false, error: err.message });
     }
 });
+
 // ================= TELEGRAM & QUEUE API =================
 
 app.post('/api/telegram/send-code', authenticateUser, async (req, res) => {
@@ -849,6 +850,7 @@ app.get('/api/telegram/saved-messages', authenticateUser, async (req, res) => {
         return res.status(500).json({ success: false, message: err.message });
     }
 });
+
 app.get('/api/status', authenticateUser, (req, res) => {
     const userId = req.user.id;
     const queue = userQueues.get(userId);
