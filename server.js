@@ -1248,6 +1248,10 @@ app.post('/api/stop', authenticateUser, (req, res) => {
     });
 });
 
+app.get('/ping', (req, res) => {
+    res.status(200).send('OK');
+});
+
 app.use(express.static(__dirname));
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
